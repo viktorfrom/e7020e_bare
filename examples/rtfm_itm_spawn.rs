@@ -1,11 +1,10 @@
 #![no_main]
 #![no_std]
 
-use cortex_m::{iprint, iprintln};
+use cortex_m::iprintln;
 
 use panic_semihosting as _;
 use rtfm::app;
-use stm32f4xx_hal::stm32 as pac;
 
 #[app(device = stm32f4xx_hal::stm32, peripherals = true )]
 const APP: () = {
@@ -23,7 +22,7 @@ const APP: () = {
     }
 
     #[idle (resources = [itm], spawn = [task1])]
-    fn idle(mut cx: idle::Context) -> ! {
+    fn idle(cx: idle::Context) -> ! {
         let (mut itm, spawn) = (cx.resources.itm, cx.spawn);
         itm.lock(|itm| {
             let stim = &mut itm.stim[0];
