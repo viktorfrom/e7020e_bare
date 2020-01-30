@@ -277,6 +277,36 @@ This is an example of a bad programming pattern, typically leading to serious pr
 
 ---
 
+### Real Time For the Masses (RTFM)
+
+RTFM allows for safe concurrency, sharing resources between different tasks running at different priorities. The resource managament and scheduling follow the Stack Resource Policy, which gives us outstanding properties of race- and deadlock free scheduling, single blocking, stack sharing etc.
+
+We start by a simple example. For the full documentation see the [RTFM book](https://rtfm.rs/0.5/book/en/)
+
+### RTFM ITM, with Interrupt
+
+Key here is that we share the `ITM` peripheral in between the `init` task (that runs first), the `exti0` task (that runs preemptively with a default priority of 1), and the backgroud task `idle` (that runs on priority 0). Since the highest priority task cannot be interrupted we can safely access the shared resource directly (in `exti0`). In `idle` however, we need to lock the resource (which returns `itm` (a reference to the `ITM`) peripheral to the closure).
+
+By `rtfm::pend` we can *simulate* we trigger an interrupt, (more realistically, interrupts are triggered by the environment, e.g., a peripheral has received some data).
+
+``` shell
+$ cargo run --example rtfm_itm --features rtfm
+```
+For more information see [app](https://rtfm.rs/0.5/book/en/by-example/app.html).
+
+### RTFM ITM, using Spawn
+
+In the previous example we triggered the `exti0` task manually. We can let RTFM do that for us using `spawn` with an optional payload. Thus we have simple way to do message passing.
+
+``` shell
+$ cargo run --example rtfm_itm_spawn --features rtfm
+```
+
+The `spawn.unwrap()` panics if the message could not be delivered (i.e, the queue is full). The size (capacity) of queues are 1 by default, but can be for each task individually, see [spawn](https://rtfm.rs/0.5/book/en/by-example/tasks.html).
+
+The example shows that the message to `task1` is queued while `idle` is holding the `itm` resource.
+
+
 ### RTFM Blinky
 
 No example suit is complete without the mandatory `blinky` demo, so here we go! The exampe `rtfm_blinky.rs` showcase the simplicity of using the RTFM framework.

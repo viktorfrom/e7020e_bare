@@ -25,9 +25,10 @@ const APP: () = {
 
     #[idle (resources = [itm], spawn = [task1])]
     fn idle(mut cx: idle::Context) -> ! {
-        cx.resources.itm.lock(|itm| {
+        let (mut itm, spawn) = (cx.resources.itm, cx.spawn);
+        itm.lock(|itm| {
             let stim = &mut itm.stim[0];
-            cx.spawn.task1("from idle, itm locked").unwrap();
+            spawn.task1("from idle, itm locked").unwrap();
             iprintln!(stim, "idle");
         });
         cx.spawn.task1("from idle").unwrap();
