@@ -2,10 +2,9 @@
 //!
 //! ITM is much faster than semihosting. Like 4 orders of magnitude or so.
 //!
-//! You'll need [`itmdump`] to receive the message on the host plus you'll need to uncomment two
-//! `monitor` commands in the `.gdbinit` file.
+//! You'll need [`itmdump`] to view the output.
 //!
-//! [`itmdump`]: https://docs.rs/itm/0.2.1/itm/
+//! [`itmdump`]: https://docs.rs/itm/0.3.1/itm/
 //!
 //! ---
 

@@ -127,15 +127,14 @@ In a separate terminal:
 
 ``` console
 $ mkfifo /tmp/itm.fifo
-$ itmdump -f /tmp/itm.fifo -F
+$ itmdump -f /tmp/itm.fifo
+Hello, again!
 ```
 
 Now you can compile and run the `itm.rs` application using the same steps as the `hello` program. In the `itmdump` console you should now have the trace output.
 
 ``` console
-$ mkfifo /tmp/itm.log
-$ itmdump -f /tmp/itm.log -F
-Hello, again!
+$ cargo run --example itm
 ```
 
 Under the hood there is much less overhead, the serial transfer rate is set to 2MBit in between the ITM (inside of the MCU) and `stlink` programmer (onboard the Nucleo devkit). So in theory we can transmit some 200kByte/s data over ITM. However, we are limited by the USB interconnection and `openocd` to receive and forward packages.
@@ -146,7 +145,7 @@ The `stlink` programmer, buffers packages but has limited buffer space. Hence in
 
 ### Rust `panic` Handling
 
-The `rust` compiler statically analyses your code, but in cases some errors cannot be detected at compile time (e.g., array indexing out of bounds, division by zore etc.). The `rust` compiler generates code checking such faults at run-time, instead of just crashing (or even worse, continuing with faulty/undefined values like a `C` program would) . A fault in Rust will render a `panic`, whith an associated error message (useful to debugging the application). We can choose how such `panic`s should be treated, e.g., transmitting the error message using `semihosting`, `ITM`, some other channel (e.g. a serial port), or simply aborting the program.
+The `rust` compiler statically analyses your code, but in cases some errors cannot be detected at compile time (e.g., array indexing out of bounds, division by zero etc.). The `rust` compiler generates code checking such faults at run-time, instead of just crashing (or even worse, continuing with faulty/undefined values like a `C` program would) . A fault in Rust will render a `panic`, with an associated error message (useful to debugging the application). We can choose how such `panic`s should be treated, e.g., transmitting the error message using `semihosting`, `ITM`, some other channel (e.g. a serial port), or simply aborting the program.
 
 The `panic` example demonstrates some possible use cases.
 
@@ -169,7 +168,7 @@ Breakpoint 1, rust_begin_unwind (_info=0x20017fb4)
 $1 = core::panic::PanicInfo {payload: core::any::&Any {pointer: 0x8000760 <.Lanon.21a036e607595cc96ffa1870690e4414.142> "\017\004\000", vtable: 0x8000760 <.Lanon.21a036e607595cc96ffa1870690e4414.142>}, message: core::option::Option<&core::fmt::Arguments>::Some(0x20017fd0), location: core::panic::Location {file: <error reading variable>, line: 27, col: 5}}
 ```
 
-Here `p *_info` prints the arument to `rust_begin_unwind`, at the far end you will find `line: 27, col 5`, which correstponds to the source code calling `panic("Ooops")`. (`gdb` is not (yet) Rust aware enough to figure out how the `file` field should be interpreted, but at least we get some useful information).
+Here `p *_info` prints the arument to `rust_begin_unwind`, at the far end you will find `line: 27, col 5`, which corresponds to the source code calling `panic("Ooops")`. (`gdb` is not (yet) Rust aware enough to figure out how the `file` field should be interpreted, but at least we get some useful information).
 
 Alternatively we can trace the panic message over `semihosting` (comment out `extern crate panic_halt` and uncomment `extern crate panic_semihosting`).
 
