@@ -22,5 +22,7 @@ fn main() -> ! {
     let stim = &mut p.ITM.stim[0];
 
     iprintln!(stim, "Hello, again!");
-    loop {}
+    loop {
+        continue;
+    }
 }

@@ -189,18 +189,17 @@ A third alternative would be to store the panic message in some non-volatile mem
 
 ### Exception Handling and Core Peripheral Access
 
-The ARM Cortex-M processors features a set of *core* peripherpherals and *exception* handlers. These offer basic functionality independent of vendor (NXP, STM, ...). The `SysTick` perihperal is a 24-bit countdown timer, that raises a `SysTick` exception when hitting 0 and reloads the set value. Seen as a real-time system, we can dispatch the `SysTick` task in a periodic fashion (without accumulated drift under some additional constraints).
+The ARM Cortex-M processors features a set of *core* peripherals and *exception* handlers. These offer basic functionality independent of vendor (NXP, STM, ...). The `SysTick` peripheral is a 24-bit countdown timer, that raises a `SysTick` exception when hitting 0 and reloads the set value. Seen as a real-time system, we can dispatch the `SysTick` task in a periodic fashion (without accumulated drift under some additional constraints).
 
 In the `exception.rs` example  a `.` is emitted by the `SysTick` handler using `semihosting`. Running the example should give you a periodic updated of the `openocd` console.
 
-The `exception_itm.rs` and `exception_itm_raw.rs` uses the ITM instead. The difference is the way
-they gain access to the `ITM` periphereal. In the first case we *steal* the whole set of core peripherals (stealing works only in `--release` mode), while the in the second case we use *raw* pointer access to the `ITM`. In both cases, the code is *unsafe*, as there is no guarantee that other tasks may access the peripheral simultaneously (causing a conflict/race). Later we will see how the concurrency problem is solved in RTFM to offer safe access to peripherals.
+The `exception_itm.rs` and `exception_itm_raw.rs` uses the ITM instead. The difference is the way they gain access to the `ITM` peripheral. In the first case we *steal* the whole set of core peripherals, while the in the second case we use *raw* pointer access to the `ITM`. In both cases, the code is *unsafe*, as there is no guarantee that other tasks may access the peripheral simultaneously (causing a conflict/race). Later we will see how the concurrency problem is solved in RTFM to offer safe access to peripherals.
 
 ---
 
-### Crash - Analysing the Exception Frame
+### Crash - Analyzing the Exception Frame
 
-In case the execution of an intstruction fails, a `HardFault` exception is raised by the hardware, and the `HardFault` handler is executed. We can define our own handler as in example `crash.rs`. In `main` we attempt to read an illegal address, causing a `HardFault`, and we hit a breakpoint (`openocd.gdb` script sets a breakbpoint at the `HardFualt` handler). From there you can print the exception frame, reflecting the state of the MCU when the error occured. You can use `gdb` to give a `back trace` of the call-stack leading up to the error. See the example for detailed information.
+In case the execution of an instruction fails, a `HardFault` exception is raised by the hardware, and the `HardFault` handler is executed. We can define our own handler as in example `crash.rs`. In `main` we attempt to read an illegal address, causing a `HardFault`, and we hit a breakpoint (`openocd.gdb` script sets a breakpoint at the `HardFualt` handler). From there you can print the exception frame, reflecting the state of the MCU when the error occurred. You can use `gdb` to give a `back trace` of the call-stack leading up to the error. See the example for detailed information.
 
 ---
 
