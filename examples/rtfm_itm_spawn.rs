@@ -3,7 +3,6 @@
 
 use cortex_m::{iprint, iprintln};
 
-use pac::Interrupt;
 use panic_semihosting as _;
 use rtfm::app;
 use stm32f4xx_hal::stm32 as pac;
