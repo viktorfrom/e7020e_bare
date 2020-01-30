@@ -205,75 +205,37 @@ In case the execution of an instruction fails, a `HardFault` exception is raised
 
 ### Device Crates and System View Descriptions (SVDs)
 
-Besides the ARM provided *core* peripherals the STM32F401re/STM32F411re MCUs has numerous vendor specific peripherals (GPIOs, Timers, USARTs etc.). The vendor provides a System View Description (SVD) specifying the register block layouts (fields, enumerated values, etc.). Using the `svd2rust` tool we can derive a `Peripheral Access Crate` (PAC) providing an API for the device that allow us to access each register according to the vendors specification. The `device.rs` example showcase how a PAC for the  STM32F401re/STM32F411re MCUs can be added. (These MCUs have the same set of peripherals, only the the maximum clock rating differs.) Here we use the STM32F413 as that covers the STM32F401/411/413 devices.
+Besides the ARM provided *core* peripherals the STM32F401re/STM32F411re MCUs has numerous vendor specific peripherals (GPIOs, Timers, USARTs etc.). The vendor provides a System View Description (SVD) specifying the register block layouts (fields, enumerated values, etc.). Using the `svd2rust` tool we can derive a `Peripheral Access Crate` (PAC) providing an API for the device that allow us to access each register according to the vendors specification. The `device.rs` example showcase how a PAC for the  STM32F401re/STM32F411re MCUs can be added. (These MCUs have the same set of peripherals, only the the maximum clock rating differs.)
+
+``` shell
+$ cargo run --example device --features stm32f4
+```
 
 The example output a `.` each second over `semihosting` and `ITM`.
 
-Looking at the `Corgo.toml` file we find:
+#### The `Cargo.toml` file
+
+Looking at the `Cargo.toml` file we find:
 
 ``` toml
-[package]
-authors = ["Per Lindgren <per.lindgren@ltu.se>"]
-edition = "2018"
-readme = "README.md"
-name = "app"
-version = "0.1.0"
-
-[dependencies]
-cortex-m-rt = "0.6.7"
-cortex-m-semihosting = "0.3.2"
-
-# panic-abort = "0.3.1" # requires nightly toolchain
-panic-halt = "0.2.0"
-panic-semihosting = "0.5.1"
-panic-itm = "0.4.0"
-
-bare-metal = "0.2.4"
-nb = "0.1.1"
-heapless = "0.4.1"
-
-[dependencies.cortex-m-rtfm]
-version = "0.4.0"
-optional = true
-
-[dependencies.cortex-m]
-version = "0.5.8"
-# features = ["inline-asm"] # <- currently requires nightly compiler
-
-# Uncomment for the allocator example.
-# alloc-cortex-m = "0.3.5"
-
+...
 [dependencies.stm32f4]
-version = "0.5.0"
-features = ["stm32f413", "rt"]
-optional = true
+version         = "0.9.0"
+features        = ["stm32f401", "rt"]
+optional        = true
 
-[dependencies.stm32f4xx-hal]
-git = "https://github.com/stm32-rs/stm32f4xx-hal.git"
-version = "0.2.8"
-features = ["stm32f413", "rt"]
-optional = true
+...
 
-[features]
-pac = ["stm32f4"]
-hal = ["stm32f4xx-hal"]
-rtfm = ["cortex-m-rtfm"]
-rtfm-tq = ["cortex-m-rtfm/timer-queue"]
-
-# this lets you use `cargo fix`!
-[[bin]]
-name = "app"
-test = false
-bench = false
-
-[profile.release]
-incremental = false # disable incremental build to allow lto on nightly
-codegen-units = 1   # better optimizations
-debug = true        # symbols are nice and they don't increase the size on Flash
-lto = true          # better optimizations
+# Built options for different examples
+[[example]]
+name                = "device"
+required-features   = ["stm32f4"]
+...
 ```
 
-We compile `stm32f4` (a generic library for all STMF4 MCUs) with `features = ["stm32f413", "rt"]`, which indicates the specific MCU with `rt` (run-time support) enabled. By having the PAC as an optional dependency, we did not need to compile it (unless we need it, and as you might have experienced already compiling the PAC takes a bit of time to compile initially). (An SVD file is typically > 50k lines, amounting to the same (or more) lines of Rust code.)
+We compile `stm32f4` (a generic library for all STMF4 MCUs) with `features = ["stm32f401", "rt"]`, which indicates the specific MCU with `rt` (so we get the interrupt vector etc.). By having the PAC as an optional dependency, we did not need to compile it (unless we need it, and as you might have experienced already compiling the PAC takes a bit of time to compile initially). (An SVD file is typically > 50k lines, amounting to the same (or more) lines of Rust code.)
+
+By compiling with  `--features stm32f4` we "opt-in" this dependency.
 
 ---
 
@@ -288,9 +250,9 @@ Looking closer at the example, `rcc` is a *singleton* (`constrain` consumes the 
 
 This pattern ensures that the clock configuration will remain unchanged (the `freeze` function cannot be called again, as the `rcc` is consumed, also you cannot get a new `rcc` as the `RCC` was consumed by `contstrain`).
 
-Why is this important you may ask? Well, this *pattern* allows the compiler to check and ensure that your code (or some library that you use) does not make changes to the system (in this case the clocking), wich reduces the risk of errors and improves robustness.
+Why is this important you may ask? Well, this *pattern* allows the compiler to check and ensure that your code (or some library that you use) does not make changes to the system (in this case the clocking), which reduces the risk of errors and improves robustness.
 
-Similarly, we `split` the `GPIOA` into its parts (pins), and select the operating mode to `af7` for `tx` (the transmit pin `pa2`), and `rx` (the receive pin `pa3`). For details see, RM0368, figure 17 (page 151), and table 9 in STM32F401xD STM32F401xE. The GPIO pins `pa2` and `pa3` are (by default) connected to the `stlink` programmer, see section 6.8 of the Nucleo64 user manual `UM1724`. When the `stlink` programmer is connected to a linux host, the device `\dev\ttyACM0` appears as a *virtual com port* (connected to `pa2`/`pa3` by default).
+Similarly, we `split` the `GPIOA` into its parts (pins), and select the operating mode to `af7` for `tx` (the transmit pin `pa2`), and `rx` (the receive pin `pa3`). For details see, RM0368, figure 17 (page 151), and table 9 in STM32F401xD STM32F401xE. The GPIO pins `pa2` and `pa3` are (by default) connected to the `stlink` programmer, see section 6.8 of the Nucleo64 user manual `UM1724`. When the `stlink` programmer is connected to a linux host, the device `\dev\ttyACM0` appears as a *virtual com port*.
 
 Now we can call `Serial::usart2` to setup the serial communication, (according to table 9 in STM32F401xD STM32F401xE documentation it is USART2).
 
@@ -306,7 +268,7 @@ As the underlying hardware implementation buffers only a single byte, the input 
 You can now compile and run the example. Start `moserial` (or some other serial communication tool), connect to `/dev/ttyACM0` with 115200 8N1). Now write a single character `a` in the `Outgoing` pane, followed by pressing <Enter>. You should receive back an `a` from the target. In the ITM trace output you should see:
 
 ``` console
-[2019-01-08T10:31:36.867Z]   Ok 97. 
+Ok 97
 ```
 
 Depending if <Enter> was encoded as CR+LF, CR, LF, TAB, ... you will get additional bytes sent (and received). Try sending multiple characters at once, e.g. `abcd`, you will see that the you well get a buffer overflow.

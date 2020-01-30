@@ -27,7 +27,9 @@ fn main() -> ! {
     syst.enable_counter();
     syst.enable_interrupt();
 
-    loop {}
+    loop {
+        continue;
+    }
 }
 
 #[exception]

@@ -1,9 +1,9 @@
 [package]
 name = "app"
 categories = ["embedded", "no-std"]
-authors = ["Per Lindgren <per.lindgren@ltu.se>", "Emil Fresk <emil.fresk@gmail.com>"]
-description = "Example project"
-keywords = ["arm", "cortex-m", "mav"]
+authors = ["Per Lindgren <per.lindgren@ltu.se>"]
+description = "Example project (app)"
+keywords = ["arm", "cortex-m", "rtfm", "e7020e"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/korken89/trustflight_firmware"
 version = "0.1.0"
@@ -17,11 +17,16 @@ cortex-m-semihosting    = "0.3.5"
 cortex-m                = "0.6.2"
 aligned                 = "0.3.2"
 ufmt                    = "0.1.0"
-panic-itm = "0.4.1"
+panic-itm               = "0.4.1"
+nb                      = "0.1.2"
 
 [dependencies.cortex-m-rt]
-version          = "0.6.12"
+version         = "0.6.12"
 
+[dependencies.stm32f4]
+version         = "0.9.0"
+features        = ["stm32f401", "rt"]
+optional        = true
 
 [dependencies.stm32f4xx-hal]
 version         = "0.6.0"
@@ -35,8 +40,13 @@ test            = false
 bench           = false
 
 # Built options for different examples
-# [[example]]
+[[example]]
+name                = "device"
+required-features   = ["stm32f4"]
 
+[[example]]
+name                = "serial"
+required-features   = ["stm32f4xx-hal"]
 
 [profile.dev]
 opt-level       = 1
@@ -45,7 +55,7 @@ debug           = true
 lto             = false
 
 [profile.release]
-opt-level       = "s"   # optimize for size
+#opt-level       = "s"   # optimize for size
 codegen-units   = 1     # better optimizations
 debug           = true  # symbols are nice and they don't increase the size on Flash
 lto             = true  # better optimizations
