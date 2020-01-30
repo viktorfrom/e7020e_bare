@@ -12,7 +12,6 @@ edition = "2018"
 [dependencies]
 panic-halt              = "0.2"
 panic-semihosting       = "0.5"
-cortex-m-rtfm           = "0.5.1"
 cortex-m-semihosting    = "0.3.5"
 cortex-m                = "0.6.2"
 aligned                 = "0.3.2"
@@ -33,6 +32,13 @@ version         = "0.6.0"
 features        = ["stm32f401", "rt"]
 optional        = true
 
+[dependencies.cortex-m-rtfm]
+version         = "0.5.1"
+optional        = true
+
+[features]
+rtfm            = ["cortex-m-rtfm", "stm32f4xx-hal"]
+
 # this lets you use `cargo fix`!
 [[bin]]
 name            = "app"
@@ -47,6 +53,10 @@ required-features   = ["stm32f4"]
 [[example]]
 name                = "serial"
 required-features   = ["stm32f4xx-hal"]
+
+[[example]]
+name                = "rtfm_blinky"
+required-features   = ["rtfm"]
 
 [profile.dev]
 opt-level       = 1
