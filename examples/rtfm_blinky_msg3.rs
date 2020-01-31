@@ -11,12 +11,8 @@ use stm32f4xx_hal::stm32;
 
 #[rtfm::app(device = stm32f4xx_hal::stm32, monotonic = rtfm::cyccnt::CYCCNT, peripherals = true)]
 const APP: () = {
-    struct Resources {
-        // late resources
-        GPIOA: stm32::GPIOA,
-    }
     #[init(schedule = [toggle])]
-    fn init(mut cx: init::Context) -> init::LateResources {
+    fn init(mut cx: init::Context) {
         let mut core = cx.core;
         let mut device = cx.device;
 
@@ -30,33 +26,27 @@ const APP: () = {
         // NOTE do *not* call `Instant::now` in this context; it will return a nonsense value
         let now = cx.start; // the start time of the system
 
-        // Schedule `toggle` to run 8e6 cycles (clock cycles) in the future
-        cx.schedule.toggle(now + 8_000_000.cycles(), true).unwrap();
-
         // power on GPIOA, RM0368 6.3.11
         device.RCC.ahb1enr.modify(|_, w| w.gpioaen().set_bit());
         // configure PA5 as output, RM0368 8.4.1
         device.GPIOA.moder.modify(|_, w| w.moder5().bits(1));
 
-        // pass on late resources
-        init::LateResources {
-            GPIOA: device.GPIOA,
-        }
+        cx.schedule
+            .toggle(now + 8_000_000.cycles(), true, device.GPIOA);
     }
 
-    #[task(resources = [GPIOA], schedule = [toggle])]
-    fn toggle(cx: toggle::Context, toggle: bool) {
-        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
+    #[task(schedule = [toggle])]
+    fn toggle(cx: toggle::Context, toggle: bool, gpioa: stm32::GPIOA) {
+        hprintln!("toggle  @ {:?}", Instant::now()).unwrap();
 
         if toggle {
-            cx.resources.GPIOA.bsrr.write(|w| w.bs5().set_bit());
+            gpioa.bsrr.write(|w| w.bs5().set_bit());
         } else {
-            cx.resources.GPIOA.bsrr.write(|w| w.br5().set_bit());
+            gpioa.bsrr.write(|w| w.br5().set_bit());
         }
 
         cx.schedule
-            .toggle(cx.scheduled + 8_000_000.cycles(), !toggle)
-            .unwrap();
+            .toggle(cx.scheduled + 8_000_000.cycles(), !toggle, gpioa);
     }
 
     extern "C" {

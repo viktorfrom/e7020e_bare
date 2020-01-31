@@ -31,7 +31,7 @@ const APP: () = {
         let now = cx.start; // the start time of the system
 
         // Schedule `toggle` to run 8e6 cycles (clock cycles) in the future
-        cx.schedule.toggle(now + 8_000_000.cycles(), true).unwrap();
+        cx.schedule.toggle(now + 8_000_000.cycles()).unwrap();
 
         // power on GPIOA, RM0368 6.3.11
         device.RCC.ahb1enr.modify(|_, w| w.gpioaen().set_bit());
@@ -45,17 +45,19 @@ const APP: () = {
     }
 
     #[task(resources = [GPIOA], schedule = [toggle])]
-    fn toggle(cx: toggle::Context, toggle: bool) {
+    fn toggle(cx: toggle::Context) {
+        static mut TOGGLE: bool = false;
         hprintln!("foo  @ {:?}", Instant::now()).unwrap();
 
-        if toggle {
+        if *TOGGLE {
             cx.resources.GPIOA.bsrr.write(|w| w.bs5().set_bit());
         } else {
             cx.resources.GPIOA.bsrr.write(|w| w.br5().set_bit());
         }
 
+        *TOGGLE = !*TOGGLE;
         cx.schedule
-            .toggle(cx.scheduled + 8_000_000.cycles(), !toggle)
+            .toggle(cx.scheduled + 8_000_000.cycles())
             .unwrap();
     }
 
