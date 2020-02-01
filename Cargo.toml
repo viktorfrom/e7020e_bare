@@ -55,6 +55,14 @@ name                = "serial"
 required-features   = ["stm32f4xx-hal"]
 
 [[example]]
+name                = "rtfm_itm"
+required-features   = ["rtfm"]
+
+[[example]]
+name                = "rtfm_itm_spawn"
+required-features   = ["rtfm"]
+
+[[example]]
 name                = "rtfm_blinky_msg1"
 required-features   = ["rtfm"]
 
