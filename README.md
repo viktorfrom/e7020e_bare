@@ -649,8 +649,6 @@ This ensures 1) the program will not yet again overflow the ITM buffer, 2) the f
 
 ## Visual Studio Code
 
-TODO: Update
-
 `vscode` is highly configurable, (keyboard shortcuts, keymaps, plugins etc.) Besides `rust-analyzer`, there is also Rust support through the [rls-vscode](https://github.com/rust-lang/rls-vscode) plugin. Both should work nicely.
 
 It is possible to run `arm-none-eabi-gdb` from within the `vscode` using the [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) plugin.
