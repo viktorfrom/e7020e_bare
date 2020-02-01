@@ -1,0 +1,133 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app (debug)",
+            "preLaunchTask": "cargo build",
+            "executable": "./target/thumbv7em-none-eabihf/debug/app",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "itm (debug)",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable",
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 16000000,
+                "swoFrequency": 2000000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "itm (debug) fifo",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable",
+                "monitor tpiu config internal /tmp/itm.fifo uart off 16000000"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "bare0 (debug)",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/bare0",
+            "configFiles": [
+                "./openocd.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app (release)",
+            "preLaunchTask": "cargo build --release",
+            "executable": "./target/thumbv7em-none-eabihf/release/app",
+            "configFiles": [
+                "./openocd.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "funnel (debug)",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/funnel",
+            "configFiles": [
+                "./openocd.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 16000000,
+                "swoFrequency": 2000000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM0",
+                        "port": 0
+                    },
+                    {
+                        "type": "console",
+                        "label": "ITM1",
+                        "port": 1
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+    ],
+}
