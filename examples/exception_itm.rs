@@ -4,13 +4,12 @@
 //!
 //! [1]: https://rust-embedded.github.io/cortex-m-rt/0.6.1/cortex_m_rt_macros/fn.exception.html
 //!
-//! Notice, steal will panic! in debug mode, due to a `debug_assert` (ignored in release).
 //! ---
 
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
+use panic_halt as _;
 
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::{iprint, iprintln, Peripherals};

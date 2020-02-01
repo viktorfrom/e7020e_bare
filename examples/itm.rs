@@ -7,11 +7,12 @@
 //! [`itmdump`]: https://docs.rs/itm/0.3.1/itm/
 //!
 //! ---
-
+#![deny(unsafe_code)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
+use panic_halt as _;
 
 use cortex_m::{iprintln, Peripherals};
 use cortex_m_rt::entry;
