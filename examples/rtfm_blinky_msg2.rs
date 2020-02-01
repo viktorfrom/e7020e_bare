@@ -1,5 +1,5 @@
 #![deny(unsafe_code)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -16,9 +16,9 @@ const APP: () = {
         GPIOA: stm32::GPIOA,
     }
     #[init(schedule = [toggle])]
-    fn init(mut cx: init::Context) -> init::LateResources {
+    fn init(cx: init::Context) -> init::LateResources {
         let mut core = cx.core;
-        let mut device = cx.device;
+        let device = cx.device;
 
         // Initialize (enable) the monotonic timer (CYCCNT)
         core.DCB.enable_trace();

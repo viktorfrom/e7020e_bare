@@ -1,5 +1,5 @@
 #![deny(unsafe_code)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![no_main]
 #![no_std]
 
@@ -12,9 +12,9 @@ use stm32f4xx_hal::stm32;
 #[rtfm::app(device = stm32f4xx_hal::stm32, monotonic = rtfm::cyccnt::CYCCNT, peripherals = true)]
 const APP: () = {
     #[init(schedule = [toggle])]
-    fn init(mut cx: init::Context) {
+    fn init(cx: init::Context) {
         let mut core = cx.core;
-        let mut device = cx.device;
+        let device = cx.device;
 
         // Initialize (enable) the monotonic timer (CYCCNT)
         core.DCB.enable_trace();
@@ -32,10 +32,11 @@ const APP: () = {
         device.GPIOA.moder.modify(|_, w| w.moder5().bits(1));
 
         cx.schedule
-            .toggle(now + 8_000_000.cycles(), true, device.GPIOA);
+            .toggle(now + 8_000_000.cycles(), true, device.GPIOA)
+            .ok();
     }
 
-    #[task(schedule = [toggle])]
+    #[task(schedule= [toggle])]
     fn toggle(cx: toggle::Context, toggle: bool, gpioa: stm32::GPIOA) {
         hprintln!("toggle  @ {:?}", Instant::now()).unwrap();
 
@@ -46,7 +47,8 @@ const APP: () = {
         }
 
         cx.schedule
-            .toggle(cx.scheduled + 8_000_000.cycles(), !toggle, gpioa);
+            .toggle(cx.scheduled + 8_000_000.cycles(), !toggle, gpioa)
+            .ok();
     }
 
     extern "C" {
