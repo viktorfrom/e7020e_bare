@@ -6,22 +6,27 @@
 
 ## Dependencies
 
-
-- Rust 1.40, or later.
+- Rust 1.40, or later. Run the following commands to update you Rust tool-chain and add the target for Arm Cortex M4 with hardware floating point support.
 
 ``` console
+$ rustup update
 $ rustup target add thumbv7em-none-eabihf
 ```
 
 - For programming (flashing) and debugging
   - `openocd` (debug host, install using your package manager)
-  - `arm-none-eabi` toolchain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity.
 
-- `st-flash` (for low level access to the MCU flash)
-- `itm` (tools for ITM trace output, install by `cargo install itm`)
-- `vscode` and `cortex-debug` (optional for an integrated debugging experience)
+  - `arm-none-eabi` tool-chain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity.
 
-* https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug
+- `itm` tools for ITM trace output, install by:
+
+``` console
+$ cargo install itm
+```
+
+- `vscode` editor/ide and `cortex-debug` plugin. Install `vscode` using your package manager and follow the instructions at [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) (optional for an integrated debugging experience)
+
+- `rust-analyzer` install following instructions at [rust-analyzer](https://github.com/rust-analyzer/rust-analyzer) (optional for Rust support in `vscode`)
 
 ---
 
@@ -72,8 +77,7 @@ $ cargo build --example hello
 $ arm-none-eabi-gdb target/thumbv7em-none-eabihf/debug/examples/hello -x openocd.gdb
 ```
 
-
-This starts gdb with `file` being the `hello` (elf) binary, and runs the `openocd.gdb` script, which loads (flashes) the binary to the target (our devkit). The script connects to the `openocd` server, enables `semihosting` and `ITM` tracing, sets `breakpoint`s at `main` (as well as some exception handlers, more on those later), finally it flashes the binary and runs the first instruction (`stepi`).
+This starts gdb with `file` being the `hello` (elf) binary, and runs the `openocd.gdb` script, which loads (flashes) the binary to the target (our devkit). The script connects to the `openocd` server, enables `semihosting` and `ITM` tracing, sets `breakpoint`s at `main` (as well as some exception handlers, more on those later), finally it flashes the binary and runs the first instruction (`stepi`). (You can change the startup behavior in the `openocd.gdb` scritp, e.g., to `continue` instead of `stepi`.)
 
 4. You can now continue debugging of the program:
 
@@ -81,8 +85,8 @@ This starts gdb with `file` being the `hello` (elf) binary, and runs the `openoc
 (gdb) c
 Continuing.
 
-Breakpoint 3, main () at examples/hello.rs:13
-13          hprintln!("Hello, world!").unwrap();
+Breakpoint 1, main () at examples/hello.rs:12
+12      #[entry]
 ```
 
 The `cortex-m-rt` run-time initializes the system and your global variables (in this case there are none). After that it calls the `[entry]` function. Here you hit a breakpoint.
@@ -280,7 +284,7 @@ This is an example of a bad programming pattern, typically leading to serious pr
 ### Real Time For the Masses (RTFM)
 
 RTFM allows for safe concurrency, sharing resources between different tasks running at different priorities. The resource managament and scheduling follow the Stack Resource Policy, which gives us outstanding properties of race- and deadlock free scheduling, single blocking, stack sharing etc.
-
+let
 We start by a simple example. For the full documentation see the [RTFM book](https://rtfm.rs/0.5/book/en/)
 
 ### RTFM ITM, with Interrupt
@@ -306,27 +310,40 @@ The `spawn.unwrap()` panics if the message could not be delivered (i.e, the queu
 
 The example shows that the message to `task1` is queued while `idle` is holding the `itm` resource.
 
+### RTFM Schedule
+
+Similarly to `spawn`, RTFM allows for to `schedule` messages to be spawned at a specific point in time.
+
+``` shell
+$ cargo run --example rtfm_schedule --features rtfm
+```
+
+For this to work, we have to provide an implementation of a timer for RTFM to use (e.g, `monotonic = rtfm::cyccnt::CYCCNT`, which is a built in implementation using the ARM core DWT unit). You may opt to provide your own implementation as well. Since the underlying timer hardware may differ between platforms, it's up to you to make sure the timer is initialized. For more information see [schedule](https://rtfm.rs/0.5/book/en/by-example/timer-queue.html)
 
 ### RTFM Blinky
 
-No example suit is complete without the mandatory `blinky` demo, so here we go! The exampe `rtfm_blinky.rs` showcase the simplicity of using the RTFM framework.
+No example suit is complete without the mandatory `blinky` demo, so here we go! The examples `rtfm_blinky.rs`, `rtfm_blinky_msg.rs`, and `rtfm_blinky_msg2.rs` showcase different approaches.
 
-An application using RTFM is defined using the `app` attribute, specifying the target PAC.
+- `rtfm_blinky.rs` stores the `GPIOA` peripheral as a resource, and uses a state local variable to hold the `TOGGLE` state.
 
-- The `static mut` section defines the shared resources. In this example we need to access the `GPIOA` in the `SysTick` exception handler. Initially all resources are delegated to the `init` task (running before the system goes live).
+- `rtfm_blinky_msg.rs` stores the `GPIOA` peripheral as a resource, but uses the message payload to represent current state.
 
+- `rtfm_blinky_msg2.rs` uses messages to pass around both current state and the *owned* peripheral.
+
+For all cases, RTFM ensures memory safety. Which approach to take depends on the use case. If your intention/design requires concurrent tasks to access a shared resource (e.g., a peripheral) you need to use the `Resources` approach. If your intention is that a resource should be accessed sequential manner, the message passing of owned resources is the way. The latter approach actually proves the sequential accesses pattern, so besides its simplicity it gives you a guarantee. This comes in handy e.g. when juggling buffers between owners of memory for DMA operations, handling of secure data etc, as you are in full control over resource ownership at all times.
+
+Regarding the HW access.
 - In `init` we:
-  - configure the `SysTick` exception/task to be triggered periodically (each second),- configure the `RCC` (enabling the `GPIOA` peripheral),
+  - configure the `RCC` (enabling the `GPIOA` peripheral),
   - configure the `PA5` pin (connected to the Green LED on the Nucleo) as an output, and finally
   - delegate access to `GPIO` as a "late" resource.
 
-- The `#[exception (resources = [GPIOA])]` attribute enables access to the `GPIOA` peripheral for the `SysTick` exception/task. (Resource access goes through `resources.<RESOURCE>`.)
+- In `toggle` we:
+- either define a task local resource `TOGGLE` to hold the current state, or pass it along as boolean argument.
+- either access `GPIOA` as a resource (provided by the context), or as an owned resources passed as parameter.
+- set/clear the `PA5` pin correspondingly. (The `bs5` field sets the `PA5` high, while `br5` clears the corresponding bit controlling the led.)
+- finally schedule a message to invoke `toggle` at a later time.
 
-- In `SysTick` we define a task local resource `TOGGLE` to hold the current state, and we set/clear the `PA5` pin correspondingly. (The `bs5` field sets the `PA5` high, while `br5` clears the corresponding bit controlling the led.) Finnally the `TOGGLE` state is inverted.
-
-Notice here, under the hood the RTFM framework analyses the `app` and concludes that `TOGGLE` and `GPIOA` are accessible (in scope) for `SysTick` exclusively, so we safely (without running any risk of race conditions) access the resources directly.
-
-Side note: Accessing a resource shared with a higher priority task, requires the user to lock the resource in order to guarantee race-free access. For further information, see the RTFM API documentation and book, cf. `cortex-m-rtfm`.
 
 ``` rust
 use rtfm::app;
