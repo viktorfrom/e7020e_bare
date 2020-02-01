@@ -77,11 +77,18 @@ $ cargo build --example hello
 $ arm-none-eabi-gdb target/thumbv7em-none-eabihf/debug/examples/hello -x openocd.gdb
 ```
 
-This starts gdb with `file` being the `hello` (elf) binary, and runs the `openocd.gdb` script, which loads (flashes) the binary to the target (our devkit). The script connects to the `openocd` server, enables `semihosting` and `ITM` tracing, sets `breakpoint`s at `main` (as well as some exception handlers, more on those later), finally it flashes the binary and runs the first instruction (`stepi`). (You can change the startup behavior in the `openocd.gdb` scritp, e.g., to `continue` instead of `stepi`.)
+This starts gdb with `file` being the `hello` (elf) binary, and runs the `openocd.gdb` script, which loads (flashes) the binary to the target (our devkit). The script connects to the `openocd` server, enables `semihosting` and `ITM` tracing, sets `breakpoint`s at `main` (as well as some exception handlers, more on those later), finally it flashes the binary and runs the first instruction (`stepi`). (You can change the startup behavior in the `openocd.gdb` script, e.g., to `continue` instead of `stepi`.)
 
 4. You can now continue debugging of the program:
 
 ``` console
+...
+Note: automatically using hardware breakpoints for read-only addresses.
+halted: PC: 0x08000a72
+DefaultPreInit ()
+    at /home/pln/.cargo/registry/src/github.com-1ecc6299db9ec823/cortex-m-rt-0.6.12/src/lib.rs:571
+571     pub unsafe extern "C" fn DefaultPreInit() {}
+
 (gdb) c
 Continuing.
 
@@ -96,13 +103,20 @@ The `cortex-m-rt` run-time initializes the system and your global variables (in 
 ``` console
 (gdb) c
 Continuing.
-halted: PC: 0x08000608
+halted: PC: 0x0800043a
+^C
+Program received signal SIGINT, Interrupt.
+hello::__cortex_m_rt_main () at examples/hello.rs:15
+15          loop {
 ```
 
-At this point, the `openocd` terminal should read:
+At this point, the `openocd` terminal should read something like:
 
 ``` console
-Info : halted: PC: 0x08000608
+ Thread
+xPSR: 0x01000000 pc: 0x08000a1a msp: 0x20008000, semihosting
+Info : halted: PC: 0x08000a72
+Info : halted: PC: 0x0800043a
 Hello, world!
 ```
 
@@ -117,7 +131,7 @@ Program received signal SIGINT, Interrupt.
 (gdb)
 ```
 
-You have now compiled and debugged a minimal Rust `hello` example. `gdb` is a very useful tool so lookup some tutorials/docs (e.g., https://sourceware.org/gdb/onlinedocs/gdb/), a Cheat Sheet can be found at https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf.
+You have now compiled and debugged a minimal Rust `hello` example. `gdb` is a very useful tool so lookup some tutorials/docs (e.g., [gdb-doc](https://sourceware.org/gdb/onlinedocs/gdb/), and the [GDB Cheat Sheet](https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf).
 
 ---
 
