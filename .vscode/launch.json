@@ -4,6 +4,10 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        // Launch configuration for `app`
+        // - debug
+        // - semihosting
+        // - run to main
         {
             "type": "cortex-debug",
             "request": "launch",
@@ -18,15 +22,21 @@
             "postLaunchCommands": [
                 "monitor arm semihosting enable"
             ],
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
+        // Launch configuration for `examples`
+        // - debug
+        // - semihosting
+        // - internal ITM/SWO tracing 
+        // - run to main 
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "name": "itm (debug)",
+            "name": "itm internal (debug)",
             "preLaunchTask": "cargo build --examples",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
                 "target/stm32f4x.cfg"
@@ -47,86 +57,80 @@
                     }
                 ]
             },
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
+        // Launch configuration for `examples`
+        // - debug
+        // - semihosting
+        // - ITM/SWO tracing to file/fifo `/tmp/itm.fifo`
+        // - run to main   
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "name": "itm (debug) fifo",
+            "name": "itm fifo (debug)",
             "preLaunchTask": "cargo build --examples",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
                 "monitor arm semihosting enable",
-                "monitor tpiu config internal /tmp/itm.fifo uart off 16000000"
+                "monitor tpiu config internal /tmp/itm.fifo uart off 16000000",
+                "monitor itm port 0 on"
             ],
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
+        // Launch configuration for `examples`
+        // - release
+        // - semihosting
+        // - ITM/SWO tracing to file/fifo `/tmp/itm.fifo`
+        // - run to main  
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "name": "bare0 (debug)",
-            "preLaunchTask": "cargo build --examples",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/bare0",
+            "name": "itm fifo (release)",
+            "preLaunchTask": "cargo build --examples --release",
+            "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
-                "./openocd.cfg",
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
-                "monitor arm semihosting enable"
+                "monitor arm semihosting enable",
+                "monitor tpiu config internal /tmp/itm.fifo uart off 16000000",
+                "monitor itm port 0 on"
             ],
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
+        // Launch configuration for `examples`
+        // - release
+        // - semihosting
+        // - ITM/SWO tracing to file/fifo `/tmp/itm.fifo`
+        // - run to main  
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "name": "app (release)",
-            "preLaunchTask": "cargo build --release",
-            "executable": "./target/thumbv7em-none-eabihf/release/app",
+            "name": "itm fifo 64MHz (release)",
+            "preLaunchTask": "cargo build --examples --release",
+            "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
-                "./openocd.cfg",
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
-                "monitor arm semihosting enable"
+                "monitor reset init",
+                "monitor arm semihosting enable",
+                "monitor tpiu config internal /tmp/itm.fifo uart off 64000000",
+                "monitor itm port 0 on"
             ],
-            "cwd": "${workspaceRoot}"
-        },
-        {
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "openocd",
-            "name": "funnel (debug)",
-            "preLaunchTask": "cargo build --examples",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/funnel",
-            "configFiles": [
-                "./openocd.cfg",
-            ],
-            "postLaunchCommands": [
-                "monitor arm semihosting enable"
-            ],
-            "swoConfig": {
-                "enabled": true,
-                "cpuFrequency": 16000000,
-                "swoFrequency": 2000000,
-                "source": "probe",
-                "decoders": [
-                    {
-                        "type": "console",
-                        "label": "ITM0",
-                        "port": 0
-                    },
-                    {
-                        "type": "console",
-                        "label": "ITM1",
-                        "port": 1
-                    }
-                ]
-            },
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
     ],

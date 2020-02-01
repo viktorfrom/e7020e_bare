@@ -555,14 +555,14 @@ There can be a number of reasons ITM tracing fails.
 
 ``` txt
 # 16000000 must match the core clock frequency
-monitor tpiu config internal /tmp/itm.log uart off 16000000
+monitor tpiu config internal /tmp/itm.fifo uart off 16000000
 monitor itm port 0 on
 ```
 
 The transfer speed (baud rate) is automatically negotiated, however you can set it explicitly (maximum 2000000).  
 
 ``` txt
-monitor tpiu config internal /tmp/itm.log uart off 16000000 2000000
+monitor tpiu config internal /tmp/itm.fifo uart off 16000000 2000000
 ```
 
 You may try a lower value.
@@ -581,7 +581,11 @@ adapter speed: 8000 kHz
 
 This invokes the `init` event, which sets the core clock to 64MHz. If you intend to run the MCU at 64MHz (using this approach), ITM will not work unless the `tpiu` setting matches 64MHz.
 
-If you on the other hand want to use `monitor reset init` but not having the core clock set to 64MHz, you can use a custom `stlink.cfg` (instead of the one shipped with `openocd`). The original looks like this:
+``` txt
+monitor tpiu config internal /tmp/itm.fifo uart off 64000000 2000000
+```
+
+If you on the other hand want to use `monitor reset init` but not having the core clock set to 64MHz, you can use a custom `.cfg` (instead of the one shipped with `openocd`). The original  `/usr/share/openocd/scripts/target/stm32f0x.cfg` looks like this:
 
 ``` txt
 ...
@@ -599,7 +603,7 @@ $_TARGETNAME configure -event reset-init {
 }
 ```
 
-The clock configuration can be commented out:
+Make a copy of the orignal and comment out the clock configuration, and store the file as `stm32f4x.cfg`:
 
 ``` txt
 ...
@@ -620,7 +624,7 @@ $_TARGETNAME configure -event reset-init {
 You can start `openocd` to use these (local) settings by:
 
 ``` console
-$ openocd -f stlink.cfg -f stm32f4x.cfg
+> openocd -f interface/stlink.cfg -f stm32f4x.cfg
 ```
 
 A possible advantege of `monitor reset init` is that the `adapter speed` is set to 8MHz, which at least in theory gives better transfer rate between `openocd` and the `stlink` programmer (default is 2MBit). I'm not sure the improvement is noticable.
@@ -631,13 +635,13 @@ In case the ITM buffer is saturated, ITM tracing stops working (and might be har
 
   1. correct and recompile the program,
 
-  2. erase the flash (using `st-flash`), 
+  2. erase the flash (using `st-flash`),
 
   3. power cycle the Nucleo (disconnect-and-re-connect),
 
   4. remove/re-make fifo, and finally re-start `openocd`/`gdb`.
   
-This ensures 1) the program will not yet again overflow the ITM buffer, 2) the faulty program is gone (and not restarted accidently on a `RESET`), 3) the programmer firmware is restarted and does not carry any persistent state, notice a `RESET` applies only to the target, not the programmer, so if the programmer crashes it needs to be power cycled), 4) the FIFO `/tmp/itm.log`, `openocd` and `gdb` will have fresh states.
+This ensures 1) the program will not yet again overflow the ITM buffer, 2) the faulty program is gone (and not restarted accidently on a `RESET`), 3) the programmer firmware is restarted and does not carry any persistent state, notice a `RESET` applies only to the target, not the programmer, so if the programmer crashes it needs to be power cycled), 4) the FIFO `/tmp/itm.fifo`, `openocd` and `gdb` will have fresh states.
 
 - Check/udate the Nucleo `st-link` firmware (as mentioned above).
 
@@ -645,21 +649,27 @@ This ensures 1) the program will not yet again overflow the ITM buffer, 2) the f
 
 ## Visual Studio Code
 
-`vscode` is highly configurable, (keyboard shortcuts, keymaps, plugins etc.) There is Rust support through the `rls-vscode` plugin (https://github.com/rust-lang/rls-vscode).
+TODO: Update
 
-It is possible to run `arm-none-eabi-gdb` from within the `vscode` using the `cortex-debug` plugin (https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug).
+`vscode` is highly configurable, (keyboard shortcuts, keymaps, plugins etc.) Besides `rust-analyzer`, there is also Rust support through the [rls-vscode](https://github.com/rust-lang/rls-vscode) plugin. Both should work nicely.
 
-For general informaiton regarding debugging in `vscode`, see https://code.visualstudio.com/docs/editor/debugging.
+It is possible to run `arm-none-eabi-gdb` from within the `vscode` using the [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) plugin.
+
+For general informaiton regarding debugging in `vscode`, see [debugging](https://code.visualstudio.com/docs/editor/debugging).
 
 Some useful (default) shortcuts:
 
 - `CTRL+SHIFT+b` compilation tasks, (e.g., compile all examples `cargo build --examples`). Cargo is smart and just re-compiles what is changed.
 
-- `CTRL+SHIFT+d` debug launch configurations, enter debug mode to choose a binary (e.g., `itm 64MHz (debug)`)
+- `CTRL+SHIFT+d` debug launch configurations, enter debug mode to choose a binary (e.g., `itm internal (debug)`)
 
-- `F5` to start. It will open the `cortex_m_rt/src/lib.rs` file, which contains the startup code. From there you can continue `F5` again.
+- Select the application you wan't to debug as the active window in `vscode`.
+
+- `F5` to start. It will run the progam up to `main` (your `entry` point). In the `launch.json` you can comment out the `"runToMain": true` if you want to the target to halt directly after reset. In this case it will open the `cortex_m_rt/src/lib.rs` file, which contains the startup code. From there you can continue `F5` again.
+
 - `F6` to break. The program will now be in the infinite loop (for this example). In general it will just break wherever the program counter happens to be.
-- You can view the ITM trace in the `OUTPUT` tab, choose the dropdown `SWO: ITM [port 0, type console]`. It should now display:
+
+- You can view the ITM trace in the `OUTPUT` tab (if using the internal `ITM` viewer). Choose the dropdown `SWO: ITM [port 0, type console]`. It should now display:
 
 ``` txt
 [2019-01-02T21:35:26.457Z]   Hello, world!
@@ -671,20 +681,22 @@ You may step, view the current context `variables`, add `watches`, inspect the `
 
 ### Caveats
 
-Visual Studio Code is not an "IDE", its a text editor with plugin support, with an API somewhat limiting what can be done from within a plugin (in comparison to Eclipse, IntelliJ...) regarding panel layouts etc. E.g., as far as I know you cannot view the `adapter output` (`openocd`) at the same time as the ITM trace, they are both under the `OUTPUT` tab. Moreover, each time you re-start a debug session, you need to re-select the `SWO: Name [port 0, type console]` to view the ITM output. There are some `hax` around this:
+Visual Studio Code is not an "IDE", its a text editor with plugin support, with an API somewhat limiting what can be done from within a plugin (in comparison to Eclipse, IntelliJ...) regarding panel layouts etc. E.g., as far as I know you cannot view the `adapter output` (`openocd`) at the same time as the ITM trace, they are both under the `OUTPUT` tab. Moreover, each time you re-start a debug session, you need to re-select the `SWO: Name [port 0, type console]` to view the ITM output. You can work around this problem:
 
 - Never shut down the debug session. Instead use the `DEBUG CONSOLE` (`CTRL+SHIFT+Y`) to get to the `gdb` console. This is not the *full* `gdb` interactive shell with some limitations (no *tab* completion e.g.). Make sure the MCU is stopped (`F6`). The console should show something like:
 
 ``` txt
 Program
  received signal SIGINT, Interrupt.
-0x0800056a in main () at examples/itm.rs:31
-31	    loop {}
+itm::__cortex_m_rt_main () at examples/itm.rs:26
+26	    loop {
 ```
 
 - Now you can edit an re-compile your program, e.g. changing the text:
 
-> iprintln!(stim, "Hello, again!");
+``` Rust
+  iprintln!(stim, "Hello, again!!!!");
+```
 
 - In the `DEBUG CONSOLE`, write `load` press `ENTER` write `monitor reset init` press `ENTER`.
 
@@ -722,63 +734,25 @@ adapter speed: 8000 kHz
 Some example launch configurations from the `.vscode/launch.json` file:
 
 ``` json
- {
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "openocd",
-            "name": "itm 64Mhz (debug)",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
-            "configFiles": [
-                "interface/stlink.cfg",
-                "target/stm32f4x.cfg"
-            ],
-            "postLaunchCommands": [
-                "monitor reset init"
-            ],
-            "swoConfig": {
-                "enabled": true,
-                "cpuFrequency": 64000000,
-                "swoFrequency": 2000000,
-                "source": "probe",
-                "decoders": [
-                    {
-                        "type": "console",
-                        "label": "ITM",
-                        "port": 0
-                    }
-                ]
-            },
-            "cwd": "${workspaceRoot}"
-        },
+        ...
+        // Launch configuration for `examples`
+        // - debug
+        // - semihosting
+        // - internal ITM/SWO tracing 
+        // - run to main 
         {
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "name": "hello 16Mhz (debug)",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/hello",
+            "name": "itm internal (debug)",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
-                "monitor arm semihosting enable"
-            ],
-            "cwd": "${workspaceRoot}"
-        },
-
-      {
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "openocd",
-            "name": "itm 16Mhz (debug)",
-            "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
-            // uses local config files
-            "configFiles": [
-                "./stlink.cfg",
-                "./stm32f4x.cfg"
-            ],
-            "postLaunchCommands": [
-                "monitor reset init"
+                "monitor arm semihosting enable",
             ],
             "swoConfig": {
                 "enabled": true,
@@ -791,17 +765,40 @@ Some example launch configurations from the `.vscode/launch.json` file:
                         "label": "ITM",
                         "port": 0
                     }
-        new file:   examples/bare9.rs_no
-        modified:   examples/crash.rs
-        modified:   examples/device.rs
-        modified:   examples/exception.rs
                 ]
             },
+            "runToMain": true,
+            "cwd": "${workspaceRoot}"
+        },
+        // Launch configuration for `examples`
+        // - debug
+        // - semihosting
+        // - ITM/SWO tracing to file/fifo `/tmp/itm.fifo`
+        // - run to main   
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "itm fifo (debug)",
+            "preLaunchTask": "cargo build --examples",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable",
+                "monitor tpiu config internal /tmp/itm.fifo uart off 16000000",
+                "monitor itm port 0 on"
+            ],
+            "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
 ```
 
-We see some similarities to the `openocd.gdb` file, we don't need to explicitly connect to the target (that is automatic). Also launching `openocd` is automatic (for good and bad, its re-started each time). `postLaunchCommands` allows arbitrary commands to be executed by `gdb` once the session is up. E.g. in the `hello` case we enable `semihosting`, while in the `itm` case we run `monitor reset init` to get the MCU in 64MHz (first example) or 16MHz (third example), before running the application (continue). Notice the first example uses the "stock" `openocd` configuration files, while the third example uses our local configuration files (that does not change the core frequency).
+We see some similarities to the `openocd.gdb` file, we don't need to explicitly connect to the target (that is automatic). Also launching `openocd` is automatic (for good and bad, its re-started each time, unless you use the `gdb` prompt to `load`). 
+
+`postLaunchCommands` allows arbitrary commands to be executed by `gdb` once the session is up. E.g. in the `app` case we enable `semihosting`, while in the `itm` case we run `monitor reset init` to get the MCU in 64MHz (first example) or 16MHz (third example), before running the application (continue). Notice the first example uses the "stock" `openocd` configuration files, while the third example uses our local configuration files (that does not change the core frequency).
 
 ---
 
