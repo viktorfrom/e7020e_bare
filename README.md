@@ -9,19 +9,21 @@
 - Rust 1.40, or later. Run the following commands to update you Rust tool-chain and add the target for Arm Cortex M4 with hardware floating point support.
 
 ``` console
-$ rustup update
-$ rustup target add thumbv7em-none-eabihf
+> rustup update
+> rustup target add thumbv7em-none-eabihf
 ```
 
 - For programming (flashing) and debugging
-  - `openocd` (debug host, install using your package manager)
+  - `openocd` debug host, (install using your package manager)
 
   - `arm-none-eabi` tool-chain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity.
+
+  - `stlink` (optional) tools for erasing and programming ST microcontrollers (install using your package manager).
 
 - `itm` tools for ITM trace output, install by:
 
 ``` console
-$ cargo install itm
+> cargo install itm
 ```
 
 - `vscode` editor/ide and `cortex-debug` plugin. Install `vscode` using your package manager and follow the instructions at [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) (optional for an integrated debugging experience)
@@ -39,7 +41,7 @@ $ cargo install itm
 1. Connect your devkit using USB. To check that it is found you can run:
 
 ``` console
-$ lsusb
+> lsusb
 ...
 Bus 001 Device 004: ID 0483:374b STMicroelectronics ST-LINK/V2.1
 ...
@@ -50,7 +52,7 @@ Bus 001 Device 004: ID 0483:374b STMicroelectronics ST-LINK/V2.1
 2. Run in a terminal (in the `app` project folder):
 
 ``` console
-$ openocd -f openocd.cfg
+> openocd -f openocd.cfg
 ...
 Info : Listening on port 6666 for tcl connections
 Info : Listening on port 4444 for telnet connections
@@ -66,15 +68,15 @@ Info : Listening on port 3333 for gdb connections
 3. In another terminal (in the same `app` folder) run:
 
 ``` console
-$ cargo run --example hello
+> cargo run --example hello
 ``` 
 The `cargo` sub-command `run` looks in the `.cargo/config` file on the configuration (`runner = "arm-none-eabi-gdb -q -x openocd.gdb"`).
 
 We can also do this manually.
 
 ``` console
-$ cargo build --example hello
-$ arm-none-eabi-gdb target/thumbv7em-none-eabihf/debug/examples/hello -x openocd.gdb
+> cargo build --example hello
+> arm-none-eabi-gdb target/thumbv7em-none-eabihf/debug/examples/hello -x openocd.gdb
 ```
 
 This starts gdb with `file` being the `hello` (elf) binary, and runs the `openocd.gdb` script, which loads (flashes) the binary to the target (our devkit). The script connects to the `openocd` server, enables `semihosting` and `ITM` tracing, sets `breakpoint`s at `main` (as well as some exception handlers, more on those later), finally it flashes the binary and runs the first instruction (`stepi`). (You can change the startup behavior in the `openocd.gdb` script, e.g., to `continue` instead of `stepi`.)
@@ -139,20 +141,20 @@ You have now compiled and debugged a minimal Rust `hello` example. `gdb` is a ve
 
 The `hello.rs` example uses the `semihosting` interface to emit the trace information (appearing in the `openocd` terminal). The drawback is that `semihosting` is incredibly slow as it involves a lot of machinery to process each character. (Essentially, it writes a character to a given position in memory, runs a dedicated break instruction, `openocd` detecects the break, reads the character at the given position in memory and emits the character to the console.)
 
-A better approach is to use the ARM ITM (Instrumentation Trace Macrocell), designed to more efficently implement tracing. The onboard `stlink` programmer can put up to 4 characters into an ITM package, and transmit that to the host (`openocd`). `openocd` can process the incoming data and send it to a file or FIFO queue. The ITM package stream needs to be decoded (header + data). To this end we use the `itmdump` tool (https://docs.rs/itm/0.3.1/itm/).
+A better approach is to use the ARM ITM (Instrumentation Trace Macrocell), designed to more efficiently implement tracing. The onboard `stlink` programmer can put up to 4 characters into an ITM package, and transmit that to the host (`openocd`). `openocd` can process the incoming data and send it to a file or FIFO queue. The ITM package stream needs to be decoded (header + data). To this end we use the [itmdump](https://docs.rs/itm/0.3.1/itm/) tool.
 
-In a separate terminal:
+In a separate terminal, create a named fifo:
 
 ``` console
-$ mkfifo /tmp/itm.fifo
-$ itmdump -f /tmp/itm.fifo
+> mkfifo /tmp/itm.fifo
+> itmdump -f /tmp/itm.fifo
 Hello, again!
 ```
 
 Now you can compile and run the `itm.rs` application using the same steps as the `hello` program. In the `itmdump` console you should now have the trace output.
 
 ``` console
-$ cargo run --example itm
+> cargo run --example itm
 ```
 
 Under the hood there is much less overhead, the serial transfer rate is set to 2MBit in between the ITM (inside of the MCU) and `stlink` programmer (onboard the Nucleo devkit). So in theory we can transmit some 200kByte/s data over ITM. However, we are limited by the USB interconnection and `openocd` to receive and forward packages.
@@ -217,7 +219,92 @@ The `exception_itm.rs` and `exception_itm_raw.rs` uses the ITM instead. The diff
 
 ### Crash - Analyzing the Exception Frame
 
-In case the execution of an instruction fails, a `HardFault` exception is raised by the hardware, and the `HardFault` handler is executed. We can define our own handler as in example `crash.rs`. In `main` we attempt to read an illegal address, causing a `HardFault`, and we hit a breakpoint (`openocd.gdb` script sets a breakpoint at the `HardFualt` handler). From there you can print the exception frame, reflecting the state of the MCU when the error occurred. You can use `gdb` to give a `back trace` of the call-stack leading up to the error. See the example for detailed information.
+In case the execution of an instruction fails, a `HardFault` exception is raised by the hardware, and the `HardFault` handler is executed. We can define our own handler as in example `crash.rs`. In `main` we attempt to read an illegal address, causing a `HardFault`, and we hit a breakpoint (`openocd.gdb` script sets a breakpoint at the `HardFault` handler). From there you can print the exception frame, reflecting the state of the MCU when the error occurred. You can use `gdb` to give a `back trace` of the call-stack leading up to the error. See the example for detailed information.
+
+Most crash conditions trigger a hard fault exception, whose handler is defined via
+
+``` rust
+#[exception]
+fn HardFault(ef: &cortex_m_rt::ExceptionFrame) -> ! {
+...
+```
+
+`cortex-m-rt` generates a trampoline, that calls into your user defined `HardFault` handler. We can use `cargo expand` to view the expanded code:
+
+``` console
+> cargo expand --example crash > crash_expand.rs
+```
+
+In the generated file we find:
+
+``` rust
+#[doc(hidden)]
+#[export_name = "HardFault"]
+#[link_section = ".HardFault.user"]
+pub unsafe extern "C" fn __cortex_m_rt_HardFault_trampoline(frame: &::cortex_m_rt::ExceptionFrame) {
+   __cortex_m_rt_HardFault(frame)
+}
+```
+
+The `HardFault` handler has access to the exception `frame`, a
+snapshot of the CPU registers at the moment of the exception.
+
+To better see what is happening we make a `--release` build
+(It reduces the amount of redundant code.)
+
+``` text
+> cargo run --example crash --release
+...
+Breakpoint 2, HardFault (frame=0x20007fe0) at examples/crash.rs:28
+28      #[exception]
+(gdb) p/x *frame
+$1 = cortex_m_rt::ExceptionFrame {r0: 0x2fffffff, r1: 0xf00000, r2: 0x0, r3: 0x0, r12: 0x0, lr: 0x800051f, pc: 0x8000524, xpsr: 0x61000000}
+(gdb) disassemble frame.pc
+Dump of assembler code for function crash::__cortex_m_rt_main:
+   0x08000520 <+0>:     mvn.w   r0, #3489660928 ; 0xd0000000
+   0x08000524 <+4>:     ldr     r0, [r0, #0]
+   0x08000526 <+6>:     b.n     0x8000526 <crash::__cortex_m_rt_main+6>
+End of assembler dump.
+```
+
+The program counter (`frame.pc`) contains the address of the instruction that caused the exception. In GDB one can
+disassemble the program around this address to observe the instruction that caused the
+exception. In our case its the `ldr r0, [r0, #0]` caused the exception. This instruction tried to load (read) a 32-bit word
+from the address stored in the register `r0`. Looking again at the contents of `ExceptionFrame`
+we find that `r0` contained the address `0x2FFF_FFFF` when this instruction was executed.
+
+Looking at the assembly `mvn.w   r0, #3489660928 ; 0xd0000000`.
+This is a *move* and *not* instruction, so the resulting value here is actually `0x2fffffff`. Why did it not do it straight up then as 0x2FFF_FFFF?
+
+Well a 32 bit constant cannot be stored in a 32 bit instruction.
+So under the hood it stores 0xd0, bit shifts it and bit wise inversion. This is the level of optimization Rust + LLVM is capable of.
+
+We can further backtrace the calls leading up to the fault.
+
+``` text
+(gdb) bt
+#0  HardFault (frame=0x20007fe0) at examples/crash.rs:79
+#1  <signal handler called>
+#2  core::ptr::read_volatile (src=0x2fffffff)
+    at /rustc/73528e339aae0f17a15ffa49a8ac608f50c6cf14/src/libcore/ptr/mod.rs:948
+#3  crash::__cortex_m_rt_main () at examples/crash.rs:71
+#4  0x08000404 in main () at examples/crash.rs:66
+```
+
+Here we see that on `frame #2` we are doing the read causing havoc.
+
+We can also use `panic!("Exception frame {:?}", ef);` to format and print the exception frame, e.g., over `semihosting` or `ITM`. In the example we use `semihosting`, so when continuing debugging you will eventually the exception frame printed in the `openocd` console. In the `openocd.gdb` file we set breakpoints to the exception handlers:
+
+``` text
+# detect unhandled exceptions, hard faults and panics
+break DefaultHandler
+break HardFault
+break rust_begin_unwind
+```
+
+So in case, you want to go directly to a `panic!` printout of the exception frame comment out the breakpoints.
+
+Notice. `panic!("Exception frame {:?}", ef);` will bring in the formatting code from the `core` library (which is kind of large), so in case you are scarce on flash memory, you may want use some other method.
 
 ---
 
@@ -226,7 +313,7 @@ In case the execution of an instruction fails, a `HardFault` exception is raised
 Besides the ARM provided *core* peripherals the STM32F401re/STM32F411re MCUs has numerous vendor specific peripherals (GPIOs, Timers, USARTs etc.). The vendor provides a System View Description (SVD) specifying the register block layouts (fields, enumerated values, etc.). Using the `svd2rust` tool we can derive a `Peripheral Access Crate` (PAC) providing an API for the device that allow us to access each register according to the vendors specification. The `device.rs` example showcase how a PAC for the  STM32F401re/STM32F411re MCUs can be added. (These MCUs have the same set of peripherals, only the the maximum clock rating differs.)
 
 ``` shell
-$ cargo run --example device --features stm32f4
+> cargo run --example device --features stm32f4
 ```
 
 The example output a `.` each second over `semihosting` and `ITM`.
@@ -266,7 +353,7 @@ repeating back incoming data over a serial port (byte by byte). You will also ge
 
 Looking closer at the example, `rcc` is a *singleton* (`constrain` consumes the `RCC` and returns a singleton. The `freeze` consumes the  singleton (`rcc`) and sets the MCU clock tree according to the (default) `cfgr`. (Later in the exercises you will change this.)
 
-This pattern ensures that the clock configuration will remain unchanged (the `freeze` function cannot be called again, as the `rcc` is consumed, also you cannot get a new `rcc` as the `RCC` was consumed by `contstrain`).
+This pattern ensures that the clock configuration will remain unchanged (the `freeze` function cannot be called again, as the `rcc` is consumed, also you cannot get a new `rcc` as the `RCC` was consumed by `constrain`).
 
 Why is this important you may ask? Well, this *pattern* allows the compiler to check and ensure that your code (or some library that you use) does not make changes to the system (in this case the clocking), which reduces the risk of errors and improves robustness.
 
@@ -297,9 +384,9 @@ This is an example of a bad programming pattern, typically leading to serious pr
 
 ### Real Time For the Masses (RTFM)
 
-RTFM allows for safe concurrency, sharing resources between different tasks running at different priorities. The resource managament and scheduling follow the Stack Resource Policy, which gives us outstanding properties of race- and deadlock free scheduling, single blocking, stack sharing etc.
-let
-We start by a simple example. For the full documentation see the [RTFM book](https://rtfm.rs/0.5/book/en/)
+RTFM allows for safe concurrency, sharing resources between different tasks running at different priorities. The resource management and scheduling follow the Stack Resource Policy, which gives us outstanding properties of race- and deadlock free scheduling, single blocking, stack sharing etc.
+
+We start by a simple example. For the full documentation see the [RTFM book](https://rtfm.rs/0.5/book/en/).
 
 ### RTFM ITM, with Interrupt
 
@@ -308,16 +395,42 @@ Key here is that we share the `ITM` peripheral in between the `init` task (that 
 By `rtfm::pend` we can *simulate* we trigger an interrupt, (more realistically, interrupts are triggered by the environment, e.g., a peripheral has received some data).
 
 ``` shell
-$ cargo run --example rtfm_itm --features rtfm
+> cargo run --example rtfm_itm --features rtfm
 ```
+
 For more information see [app](https://rtfm.rs/0.5/book/en/by-example/app.html).
+
+Looking at the `Cargo.toml` file we find:
+
+``` toml
+...
+
+[dependencies.stm32f4xx-hal]
+version         = "0.6.0"
+features        = ["stm32f401", "rt"]
+optional        = true
+
+[dependencies.cortex-m-rtfm]
+version         = "0.5.1"
+optional        = true
+
+[features]
+rtfm            = ["cortex-m-rtfm", "stm32f4xx-hal"]
+...
+
+[[example]]
+name                = "rtfm_itm"
+required-features   = ["rtfm"]
+```
+
+The `rtfm` feature *opt-in* the dependencies to `cortex-m-rtfm` and `stm32f4xx-hal` (which in turn *opt-in* the dependency to `stm32f4` under the `stm32f401` and `rt` features). Through the `hal` we can get access to the underlying device/PAC (peripherals, interrupts etc.).
 
 ### RTFM ITM, using Spawn
 
 In the previous example we triggered the `exti0` task manually. We can let RTFM do that for us using `spawn` with an optional payload. Thus we have simple way to do message passing.
 
 ``` shell
-$ cargo run --example rtfm_itm_spawn --features rtfm
+> cargo run --example rtfm_itm_spawn --features rtfm
 ```
 
 The `spawn.unwrap()` panics if the message could not be delivered (i.e, the queue is full). The size (capacity) of queues are 1 by default, but can be for each task individually, see [spawn](https://rtfm.rs/0.5/book/en/by-example/tasks.html).
@@ -336,17 +449,28 @@ For this to work, we have to provide an implementation of a timer for RTFM to us
 
 ### RTFM Blinky
 
-No example suit is complete without the mandatory `blinky` demo, so here we go! The examples `rtfm_blinky.rs`, `rtfm_blinky_msg.rs`, and `rtfm_blinky_msg2.rs` showcase different approaches.
+No example suit is complete without the mandatory `blinky` demo, so here we go! The examples `rtfm_blinky.rs`, `rtfm_blinky_msg1.rs`, `rtfm_blinky_msg2.rs`, and `rtfm_blinky_msg3.rs` showcase different approaches.
 
-- `rtfm_blinky.rs` stores the `GPIOA` peripheral as a resource, and uses a state local variable to hold the `TOGGLE` state.
+- `rtfm_blinky.rs` stores the `GPIOA` peripheral as a resource, and uses a state local variable to hold the `TOGGLE` state. The `toggle` task is bound the `SysTick` exception handler, setup in `init` to fire `SysTick` with a period of 1s.
 
-- `rtfm_blinky_msg.rs` stores the `GPIOA` peripheral as a resource, but uses the message payload to represent current state.
+The `msg` examples uses the scheduling primitives provided by RTFM.
 
-- `rtfm_blinky_msg2.rs` uses messages to pass around both current state and the *owned* peripheral.
+- `rtfm_blinky_msg1.rs` stores the `GPIOA` peripheral as a resource, and uses a state local variable to hold the `TOGGLE` state.
 
-For all cases, RTFM ensures memory safety. Which approach to take depends on the use case. If your intention/design requires concurrent tasks to access a shared resource (e.g., a peripheral) you need to use the `Resources` approach. If your intention is that a resource should be accessed sequential manner, the message passing of owned resources is the way. The latter approach actually proves the sequential accesses pattern, so besides its simplicity it gives you a guarantee. This comes in handy e.g. when juggling buffers between owners of memory for DMA operations, handling of secure data etc, as you are in full control over resource ownership at all times.
+- `rtfm_blinky_msg2.rs` stores the `GPIOA` peripheral as a resource, but uses the message payload to represent current state.
+
+- `rtfm_blinky_msg3.rs` uses messages to pass around both current state and the *owned* peripheral.
+
+For all cases, RTFM ensures memory safety. Which approach to take depends on the use case.
+
+- If your intention/design requires concurrent tasks to access a shared resource (e.g., a peripheral) you need to use the `Resources` approach.
+
+- If your intention is that a resource should be accessed sequential manner, the message passing of owned resources is the way.
+
+The latter approach actually proves the sequential accesses pattern, so besides its simplicity it gives you a guarantee. This comes in handy e.g. when juggling buffers between owners of memory for DMA operations, handling of secure data etc, as you are in full control over resource ownership at all times.
 
 Regarding the HW access.
+
 - In `init` we:
   - configure the `RCC` (enabling the `GPIOA` peripheral),
   - configure the `PA5` pin (connected to the Green LED on the Nucleo) as an output, and finally
@@ -357,48 +481,6 @@ Regarding the HW access.
 - either access `GPIOA` as a resource (provided by the context), or as an owned resources passed as parameter.
 - set/clear the `PA5` pin correspondingly. (The `bs5` field sets the `PA5` high, while `br5` clears the corresponding bit controlling the led.)
 - finally schedule a message to invoke `toggle` at a later time.
-
-
-``` rust
-use rtfm::app;
-
-#[app(device = stm32f4::stm32f413)]
-const APP: () = {
-    // late resorce binding
-    static mut GPIOA: GPIOA = ();
-
-    // init runs in an interrupt free section
-    #[init]
-    fn init() {
-        // configures the system timer to trigger a SysTick exception every second
-        core.SYST.set_clock_source(SystClkSource::Core);
-        core.SYST.set_reload(16_000_000); // period = 1s
-        core.SYST.enable_counter();
-        core.SYST.enable_interrupt();
-
-        // power on GPIOA, RM0368 6.3.11
-        device.RCC.ahb1enr.modify(|_, w| w.gpioaen().set_bit());
-        // configure PA5 as output, RM0368 8.4.1
-        device.GPIOA.moder.modify(|_, w| w.moder5().bits(1));
-
-        // pass on late resources
-        GPIOA = device.GPIOA;
-    }
-
-    #[exception (resources = [GPIOA])]
-    fn SysTick() {
-        static mut TOGGLE: bool = false;
-
-        if *TOGGLE {
-            resources.GPIOA.bsrr.write(|w| w.bs5().set_bit());
-        } else {
-            resources.GPIOA.bsrr.write(|w| w.br5().set_bit());
-        }
-
-        *TOGGLE = !*TOGGLE;
-    }
-};
-```
 
 ---
 
@@ -420,8 +502,7 @@ If you end up with a program that puts the MCU in a bad state.
 > st-flash erase
 ```
 
-- Make sure that the `st-link` firmare is up to date, you can use the java application: https://my.st.com/content/my_st_com/en/products/development-tools/software-development-tools/stm32-software-development-tools/stm32-programmers/stsw-link007.license=1549034381973.product=STSW-LINK007.version=2.33.25.html, to check/update the firmware. (Current verison is 2.33.25)
-
+- Make sure that the `st-link` firmware is up to date, you can use the java application: [stsw-link007](https://www.st.com/en/development-tools/stsw-link007.html) to check/update the firmware.
 
 ---
 
@@ -710,6 +791,10 @@ Some example launch configurations from the `.vscode/launch.json` file:
                         "label": "ITM",
                         "port": 0
                     }
+        new file:   examples/bare9.rs_no
+        modified:   examples/crash.rs
+        modified:   examples/device.rs
+        modified:   examples/exception.rs
                 ]
             },
             "cwd": "${workspaceRoot}"

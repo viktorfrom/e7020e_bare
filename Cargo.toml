@@ -63,6 +63,14 @@ name                = "rtfm_itm_spawn"
 required-features   = ["rtfm"]
 
 [[example]]
+name                = "rtfm_schedule"
+required-features   = ["rtfm"]
+
+[[example]]
+name                = "rtfm_blinky"
+required-features   = ["rtfm"]
+
+[[example]]
 name                = "rtfm_blinky_msg1"
 required-features   = ["rtfm"]
 
