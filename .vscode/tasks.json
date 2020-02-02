@@ -9,7 +9,7 @@
                 "isDefault": true
             },
             "problemMatcher": [
-                "$rustc",
+                "$rustc"
             ]
         },
         {
@@ -21,7 +21,7 @@
                 "isDefault": true
             },
             "problemMatcher": [
-                "$rustc",
+                "$rustc"
             ]
         },
         {
