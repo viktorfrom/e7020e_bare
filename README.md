@@ -139,7 +139,7 @@ You have now compiled and debugged a minimal Rust `hello` example. `gdb` is a ve
 
 ### ITM Tracing
 
-The `hello.rs` example uses the `semihosting` interface to emit the trace information (appearing in the `openocd` terminal). The drawback is that `semihosting` is incredibly slow as it involves a lot of machinery to process each character. (Essentially, it writes a character to a given position in memory, runs a dedicated break instruction, `openocd` detecects the break, reads the character at the given position in memory and emits the character to the console.)
+The `hello.rs` example uses the `semihosting` interface to emit the trace information (appearing in the `openocd` terminal). The drawback is that `semihosting` is incredibly slow as it involves a lot of machinery to process each character. (Essentially, it writes a character to a given position in memory, runs a dedicated break instruction, `openocd` detects the break, reads the character at the given position in memory and emits the character to the console.)
 
 A better approach is to use the ARM ITM (Instrumentation Trace Macrocell), designed to more efficiently implement tracing. The onboard `stlink` programmer can put up to 4 characters into an ITM package, and transmit that to the host (`openocd`). `openocd` can process the incoming data and send it to a file or FIFO queue. The ITM package stream needs to be decoded (header + data). To this end we use the [itmdump](https://docs.rs/itm/0.3.1/itm/) tool.
 
@@ -157,7 +157,7 @@ Now you can compile and run the `itm.rs` application using the same steps as the
 > cargo run --example itm
 ```
 
-Under the hood there is much less overhead, the serial transfer rate is set to 2MBit in between the ITM (inside of the MCU) and `stlink` programmer (onboard the Nucleo devkit). So in theory we can transmit some 200kByte/s data over ITM. However, we are limited by the USB interconnection and `openocd` to receive and forward packages.
+Under the hood there is much less overhead, the serial transfer rate is set to 2Mbit/s in between the ITM (inside of the MCU) and `stlink` programmer (onboard the Nucleo devkit). So in theory we can transmit some 200kByte/s data over ITM. However, we are limited by the USB interconnection and `openocd` to receive and forward packages.
 
 The `stlink` programmer, buffers packages but has limited buffer space. Hence in practice, you should keep tracing to short messages, else the buffer will overflow. See trouble shooting section if you run into trouble.
 
@@ -171,7 +171,7 @@ The `panic` example demonstrates some possible use cases.
 
 The `openocd.gdb` script sets a breakpoint at `rust_begin_unwind` (a function in the  `rust core` library, used to recover errors.)
 
-When running the example (see above howto compile and run), the `gdb` terminal will show:
+When running the example (see above how to compile and run), the `gdb` terminal will show:
 
 ``` console
 ...
@@ -188,7 +188,7 @@ Breakpoint 1, rust_begin_unwind (_info=0x20017fb4)
 $1 = core::panic::PanicInfo {payload: core::any::&Any {pointer: 0x8000760 <.Lanon.21a036e607595cc96ffa1870690e4414.142> "\017\004\000", vtable: 0x8000760 <.Lanon.21a036e607595cc96ffa1870690e4414.142>}, message: core::option::Option<&core::fmt::Arguments>::Some(0x20017fd0), location: core::panic::Location {file: <error reading variable>, line: 27, col: 5}}
 ```
 
-Here `p *_info` prints the arument to `rust_begin_unwind`, at the far end you will find `line: 27, col 5`, which corresponds to the source code calling `panic("Ooops")`. (`gdb` is not (yet) Rust aware enough to figure out how the `file` field should be interpreted, but at least we get some useful information).
+Here `p *_info` prints the argument to `rust_begin_unwind`, at the far end you will find `line: 27, col 5`, which corresponds to the source code calling `panic("Ooops")`. (`gdb` is not (yet) Rust aware enough to figure out how the `file` field should be interpreted, but at least we get some useful information).
 
 Alternatively we can trace the panic message over `semihosting` (comment out `extern crate panic_halt` and uncomment `extern crate panic_semihosting`).
 
@@ -211,7 +211,7 @@ A third alternative would be to store the panic message in some non-volatile mem
 
 The ARM Cortex-M processors features a set of *core* peripherals and *exception* handlers. These offer basic functionality independent of vendor (NXP, STM, ...). The `SysTick` peripheral is a 24-bit countdown timer, that raises a `SysTick` exception when hitting 0 and reloads the set value. Seen as a real-time system, we can dispatch the `SysTick` task in a periodic fashion (without accumulated drift under some additional constraints).
 
-In the `exception.rs` example  a `.` is emitted by the `SysTick` handler using `semihosting`. Running the example should give you a periodic updated of the `openocd` console.
+In the `exception.rs` example a `.` is emitted by the `SysTick` handler using `semihosting`. Running the example should give you a periodic updated of the `openocd` console.
 
 The `exception_itm.rs` and `exception_itm_raw.rs` uses the ITM instead. The difference is the way they gain access to the `ITM` peripheral. In the first case we *steal* the whole set of core peripherals, while the in the second case we use *raw* pointer access to the `ITM`. In both cases, the code is *unsafe*, as there is no guarantee that other tasks may access the peripheral simultaneously (causing a conflict/race). Later we will see how the concurrency problem is solved in RTFM to offer safe access to peripherals.
 
@@ -310,7 +310,7 @@ Notice. `panic!("Exception frame {:?}", ef);` will bring in the formatting code 
 
 ### Device Crates and System View Descriptions (SVDs)
 
-Besides the ARM provided *core* peripherals the STM32F401re/STM32F411re MCUs has numerous vendor specific peripherals (GPIOs, Timers, USARTs etc.). The vendor provides a System View Description (SVD) specifying the register block layouts (fields, enumerated values, etc.). Using the `svd2rust` tool we can derive a `Peripheral Access Crate` (PAC) providing an API for the device that allow us to access each register according to the vendors specification. The `device.rs` example showcase how a PAC for the  STM32F401re/STM32F411re MCUs can be added. (These MCUs have the same set of peripherals, only the the maximum clock rating differs.)
+Besides the ARM provided *core* peripherals the STM32F401re/STM32F411re MCUs has numerous vendor specific peripherals (GPIOs, Timers, USARTs etc.). The vendor provides a System View Description (SVD) specifying the register block layouts (fields, enumerated values, etc.). Using the `svd2rust` tool we can derive a `Peripheral Access Crate` (PAC) providing an API for the device that allow us to access each register according to the vendors specification. The `device.rs` example showcase how a PAC for the  STM32F401re/STM32F411re MCUs can be added. (These MCUs have the same set of peripherals, only the maximum clock rating differs.)
 
 ``` shell
 > cargo run --example device --features stm32f4
@@ -362,7 +362,7 @@ Similarly, we `split` the `GPIOA` into its parts (pins), and select the operatin
 Now we can call `Serial::usart2` to setup the serial communication, (according to table 9 in STM32F401xD STM32F401xE documentation it is USART2).
 
 Following the *singleton* pattern it consumes the `USART2` peripheral (to ensure that only one configuration can be active at any time). The second parameter is the pair of pins `(tx, px)` that we setup earlier.
-The third parameter is the USART configuration. By defualt its set to 8 bit data, and one stop bit. We set the baudrate to 115200. We also pass the `clocks` (holding information about the MCU clock setup).
+The third parameter is the USART configuration. By default it is set to 8 bit data, and one stop bit. We set the baudrate to 115200. We also pass the `clocks` (holding information about the MCU clock setup).
 
 At this point `tx` and `rx` is owned by `serial`. We can get access to them again by `serial.split()`.
 
@@ -390,7 +390,7 @@ We start by a simple example. For the full documentation see the [RTFM book](htt
 
 ### RTFM ITM, with Interrupt
 
-Key here is that we share the `ITM` peripheral in between the `init` task (that runs first), the `exti0` task (that runs preemptively with a default priority of 1), and the backgroud task `idle` (that runs on priority 0). Since the highest priority task cannot be interrupted we can safely access the shared resource directly (in `exti0`). In `idle` however, we need to lock the resource (which returns `itm` (a reference to the `ITM`) peripheral to the closure).
+Key here is that we share the `ITM` peripheral in between the `init` task (that runs first), the `exti0` task (that runs preemptively with a default priority of 1), and the background task `idle` (that runs on priority 0). Since the highest priority task cannot be interrupted we can safely access the shared resource directly (in `exti0`). In `idle` however, we need to lock the resource (which returns `itm` (a reference to the `ITM`) peripheral to the closure).
 
 By `rtfm::pend` we can *simulate* we trigger an interrupt, (more realistically, interrupts are triggered by the environment, e.g., a peripheral has received some data).
 
@@ -532,7 +532,7 @@ $ killall -9 arm-none-eabi-g
 
 Notice, the process name is truncated for some reason...
 
-If this did not help you can check if some other client has aquired the port, and kill the intruder accordingly. (In this case it was the gdb process so the above method would have worked, but in general it could be another process blocking the port.)
+If this did not help you can check if some other client has acquired the port, and kill the intruder accordingly. (In this case it was the gdb process so the above method would have worked, but in general it could be another process blocking the port.)
 
 ``` console
 $ lsof -i :3333
@@ -603,7 +603,7 @@ $_TARGETNAME configure -event reset-init {
 }
 ```
 
-Make a copy of the orignal and comment out the clock configuration, and store the file as `stm32f4x.cfg`:
+Make a copy of the original and comment out the clock configuration, and store the file as `stm32f4x.cfg`:
 
 ``` txt
 ...
@@ -627,23 +627,23 @@ You can start `openocd` to use these (local) settings by:
 > openocd -f interface/stlink.cfg -f stm32f4x.cfg
 ```
 
-A possible advantege of `monitor reset init` is that the `adapter speed` is set to 8MHz, which at least in theory gives better transfer rate between `openocd` and the `stlink` programmer (default is 2MBit). I'm not sure the improvement is noticable.
+A possible advantage of `monitor reset init` is that the `adapter speed` is set to 8MHz, which at least in theory gives better transfer rate between `openocd` and the `stlink` programmer (default is 2Mbit/s). I'm not sure the improvement is noticeable.
 
 - ITM buffer overflow
 
 In case the ITM buffer is saturated, ITM tracing stops working (and might be hard to recover). In such case:
 
-  1. correct and recompile the program,
+  1. Correct and recompile the program,
 
-  2. erase the flash (using `st-flash`),
+  2. Erase the flash (using `st-flash`),
 
-  3. power cycle the Nucleo (disconnect-and-re-connect),
+  3. Power cycle the Nucleo (disconnect-and-re-connect),
 
-  4. remove/re-make fifo, and finally re-start `openocd`/`gdb`.
+  4. Remove/re-make fifo, and finally re-start `openocd`/`gdb`.
   
-This ensures 1) the program will not yet again overflow the ITM buffer, 2) the faulty program is gone (and not restarted accidently on a `RESET`), 3) the programmer firmware is restarted and does not carry any persistent state, notice a `RESET` applies only to the target, not the programmer, so if the programmer crashes it needs to be power cycled), 4) the FIFO `/tmp/itm.fifo`, `openocd` and `gdb` will have fresh states.
+This ensures 1) the program will not yet again overflow the ITM buffer, 2) the faulty program is gone (and not restarted accidentally on a `RESET`), 3) the programmer firmware is restarted and does not carry any persistent state, notice a `RESET` applies only to the target, not the programmer, so if the programmer crashes it needs to be power cycled), 4) the FIFO `/tmp/itm.fifo`, `openocd` and `gdb` will have fresh states.
 
-- Check/udate the Nucleo `st-link` firmware (as mentioned above).
+- Check/update the Nucleo `st-link` firmware (as mentioned above).
 
 ---
 
@@ -653,7 +653,7 @@ This ensures 1) the program will not yet again overflow the ITM buffer, 2) the f
 
 It is possible to run `arm-none-eabi-gdb` from within the `vscode` using the [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) plugin.
 
-For general informaiton regarding debugging in `vscode`, see [debugging](https://code.visualstudio.com/docs/editor/debugging).
+For general information regarding debugging in `vscode`, see [debugging](https://code.visualstudio.com/docs/editor/debugging).
 
 Some useful (default) shortcuts:
 
@@ -723,7 +723,7 @@ adapter speed: 8000 kHz
 [2019-01-02T22:07:29.090Z]   Hello, again!
 ```
 
-- Using the `gdb` terminal (`DEBUG CONSOLE`) from within `vscode` is somewhat instable/experimental. E.g., `CTRL+c` does not `break` the target (use `F6`, or write `interrupt`). The `contiune` command, indeed continues execution (and the *control bar* changes mode, but you cannot `break` using neither `F6` nor `interrupt`). So it seems that the *state* of the `cortex-debug` plugin is not correctly updated. Moreover setting breakpoints from the `gdb` terminal indeed informs `gdb` about the breakpoint, but the state in `vscode` is not updated, so be aware.
+- Using the `gdb` terminal (`DEBUG CONSOLE`) from within `vscode` is somewhat unstable/experimental. E.g., `CTRL+c` does not `break` the target (use `F6`, or write `interrupt`). The `contiune` command, indeed continues execution (and the *control bar* changes mode, but you cannot `break` using neither `F6` nor `interrupt`). So it seems that the *state* of the `cortex-debug` plugin is not correctly updated. Moreover setting breakpoints from the `gdb` terminal indeed informs `gdb` about the breakpoint, but the state in `vscode` is not updated, so be aware.
 
 ---
 
