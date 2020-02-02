@@ -35,7 +35,7 @@ static mut Y: u32 = 0;
 
 #[entry]
 fn main() -> ! {
-    // local mutabale variable (changed in safe code)
+    // local mutable variable (changed in safe code)
     let mut x = unsafe { X };
 
     loop {
@@ -77,6 +77,7 @@ fn main() -> ! {
 //
 // 2. Alter the constant X_INIT so that `x += 1` directly causes `x` to wrap.
 // 	  What happens when `x` wraps
+//    (Hint, look under OUTPUT/Adopter Output to see the `openocd` output.)
 //
 //    ** your answer here **
 //
