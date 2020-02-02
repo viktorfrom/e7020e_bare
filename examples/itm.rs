@@ -1,4 +1,4 @@
-//! Sends "Hello, agian!" over the ITM port 0
+//! Sends "Hello, again!" over the ITM port 0
 //!
 //! ITM is much faster than semihosting. Like 4 orders of magnitude or so.
 //!
