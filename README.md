@@ -803,3 +803,8 @@ We see some similarities to the `openocd.gdb` file, we don't need to explicitly 
 ## GDB Advanced Usage
 
 There are numerous ways to automate `gdb`. Scripts can be run by the `gdb` command `source` (`so` for short). Scripting common tasks like setting breakpoints, dumping some memory region etc. can be really helpful.
+
+---
+
+For now:
+Copyright Per Lindgren <per.lindgren@ltu.se>
