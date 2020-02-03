@@ -14,7 +14,7 @@
 ```
 
 - For programming (flashing) and debugging
-  - `openocd` debug host, (install using your package manager)
+  - `openocd` debug host, (install using your package manager). If you are under `Ubuntu` you may need to change the `openocd.cfg` to use the deprecated (older) script (`source [find interface/stlink-v2-1.cfg]`).
 
   - `arm-none-eabi` tool-chain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity.
 
@@ -70,7 +70,7 @@ Info : Listening on port 3333 for gdb connections
 ``` console
 > cargo run --example hello
 ``` 
-The `cargo` sub-command `run` looks in the `.cargo/config` file on the configuration (`runner = "arm-none-eabi-gdb -q -x openocd.gdb"`).
+The `cargo` sub-command `run` looks in the `.cargo/config` file on the configuration (`runner = "arm-none-eabi-gdb -q -x openocd.gdb"`), if you use `gdb-multiarch`, you can change the configuration to `runner = "gdb-multiarch -q -x openocd.gdb"`.
 
 We can also do this manually.
 
@@ -143,9 +143,10 @@ The `hello.rs` example uses the `semihosting` interface to emit the trace inform
 
 A better approach is to use the ARM ITM (Instrumentation Trace Macrocell), designed to more efficiently implement tracing. The onboard `stlink` programmer can put up to 4 characters into an ITM package, and transmit that to the host (`openocd`). `openocd` can process the incoming data and send it to a file or FIFO queue. The ITM package stream needs to be decoded (header + data). To this end we use the [itmdump](https://docs.rs/itm/0.3.1/itm/) tool.
 
-In a separate terminal, create a named fifo:
+In a separate terminal, create a named fifo. If you have started `openocd` without first creating the fifo, `openocd` would have created a file `tmp/itm.fifo` for you. In general a fifo is the better option since it is a zero sized "socket" that won't blow up over time, so first remove the `tmp/itm.fifo` (if existing).
 
 ``` console
+> rm /tmp/itm.fifo
 > mkfifo /tmp/itm.fifo
 > itmdump -f /tmp/itm.fifo
 Hello, again!
