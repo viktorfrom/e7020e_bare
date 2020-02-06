@@ -3,118 +3,118 @@
 //! Inspecting the generated assembly
 //!
 //! What it covers
-//! - tracing over semihosting and ITM
+//! - ITM tracing
 //! - assembly calls and inline assembly
 //! - more on arithmetics
 
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
+extern crate panic_itm;
 
 use cortex_m_rt::entry;
 
 #[entry]
 #[inline(never)]
 fn main() -> ! {
-    // Prepend by `x` by _ to avoid warning (never used).
-    // The compiler is smart enough to figure out that
-    // `x` is not used in any menaningful way.
-
-    let mut _x = 0;
+    let mut x = core::u32::MAX - 1;
     loop {
-        _x += 1;
-        cortex_m::asm::nop();
         cortex_m::asm::bkpt();
-        _x -= 1;
+        x += 1;
+        cortex_m::asm::bkpt();
+
+        // prevent optimization by read-volatile (unsafe)
+        unsafe {
+            core::ptr::read_volatile(&x);
+        }
     }
 }
 
 // 0. Setup
 //    For this example we will use the `nightly` compiler
 //    to get inline assembly.
-//    (Inline assembly is currently not stabelized.)
+//    (Inline assembly is currently not stabilized.)
 //
 //    > rustup override set nightly
 //
-//    In the `Corgo.toml` file, uncomment
+//    In the `Cargo.toml` file, uncomment
 //    # features = ["inline-asm"] # <- currently requires nightly compiler
 //
-//    You may need/want to install addititonal components also,
-//    to that end look at the install section in the README.md.
-//    If you change toolchain, exit and re-start `vscode`.
+//    The first time you use the new toolchain you may need to install the target.
+//    > rustup target add thumbv7em-none-eabihf
+//
+//    You may need/want to install additional components also.
+//    To that end look at the install section in the README.md.
+//    If you change toolchain, you may need to exit and re-start `vscode`.
 //
 // 1. Build and run the application
 //
 //    > cargo build --example bare1
 //    (or use the vscode build task)
 //
-//    Look at the `hello.rs` and `itm.rs` examples to setup the tracing.
+//    Make sure you have followed the instructions for fifo `ITM` tracing.
+//    Debug using the `itm fifo (debug)` launch configuration.
 //
-//    When debugging the application it should get stuck in the
-//    loop, (press pause/suspend to verify this).
-//    what is the output in the ITM console
+//    When debugging the application it should hit the `bkpt` instruction.
+//    What happens when you continue (second iteration of the loop)?
 //
 //    ** your answer here **
 //
-//    What is the output in the semihosting (openocd) console
+//    What is the `ITM` output.
+//
 //    ** your answer here **
 //
-//    Commit your answers (bare1_1)
+//    Commit your answer (bare1_1)
 //
-// 2. Inspecting the generated assembly code
-//    If in `vcsode` the gdb console in DEBUG CONSOLE
+// 2. Inspecting the generated assembly code.
+//    Close and re-start the debug session. Run till you hit the `bkpt` instruction.
+//
+//    Under DEBUG CONSOLE you find the `gdb` interface.
 //
 //    What is the output of:
-//    (gdb) disassemble
+//    > disassemble
+//
+//    ** your answer here **
+//
+//    How many instructions are in between the two `bkpt` instructions in the loop.
+//    Notice, the generated code may not be exactly what you expect :)
+//
+//    ** your answer here **
+//
+//    Which instruction stores the local variable on the stack.
 //
 //    ** your answer here **
 //
 //    Commit your answers (bare1_2)
 //
-// 3. Now remove the comment for `cortex_m::asm::nop()`.
-//    Rebuild and debug, pause the program.
-//
-//    What is the output of:
-//    (gdb) disassemble
-//
-//    ** your answer here **
-//
-//    Commit your answers (bare1_3)
-//
-// 4. Now remove the comment for `cortex_m::asm::bkpt()`
-//    Rebuild and debug, let the program run until it halts.
-//
-//    What is the output of:
-//    (gdb) disassemble
-//
-//    ** your answer here **
-//
-//    Commit your answers (bare1_4)
-//
-// 5. Release mode (optimized builds).
+// 3. Release mode (optimized builds).
 //    Rebuild `bare1.rs` in release (optimized mode).
-//  
+//
 //    > cargo build --example bare1 --release
 //    (or using the vscode build task)
 //
 //    Compare the generated assembly for the loop
-//    between the dev (unoptimized) and release (optimized) build.
+//    between the dev (un-optimized) and release (optimized) build.
+//
+//    What is the output of:
+//    > disassemble
 //
 //    ** your answer here **
 //
-//    commit your answers (bare1_5)
+//    How many instructions are in between the two `bkpt` instructions.
 //
-//    Tips: The optimized build should have 3 instructions
-//    while the debug (dev) build should have > 20 instructions
-//    (both counting the inner loop only). The debug build
-//    should have additional code that call panic if the additon
-//    wraps (and in such case call panic).
+//    ** your answer here **
+//
+//    Where is the local variable stored?
+//
+//    ** your answer here **
+//
+//    commit your answers (bare1_3)
 //
 //    Discussion:
 //    In release (optimized) mode the addition is unchecked,
 //    so there is a semantic difference here in between
-//    the dev and release modes. This is motivited by:
+//    the dev and release modes. This is motivated by:
 //    1) efficiency, unchecked is faster
 //    2) convenience, it would be inconvenient to explicitly use
 //    wrapping arithmetics, and wrapping is what the programmer
@@ -122,24 +122,33 @@ fn main() -> ! {
 //    in dev/debug mode is just there for some extra safety
 //    if your intention is NON-wrapping arithmetics.
 //
-// 6. *Optional
+//    The debug build should have additional code that checks if the addition
+//    wraps (and in such case call panic). In the case of the optimized
+//    build there should be no reference to the panic handler in the generated
+//    binary. Recovering from a panic is in general very hard. Typically
+//    the best we can do is to stop and report the error (and maybe restart).
+//
+//    Later we will demonstrate how we can get guarantees of panic free execution.
+//    This is very important to improve reliability.
+//
+// 4. *Optional
 //    You can pass additional flags to the Rust `rustc` compiler.
 //
 //    `-Z force-overflow-checks=off`
 //
-//    Under this flag, code is never generated for oveflow checking.
-//    You can enable this flag (uncomment the corresponding flag in
-//    the `.cargo/config` file.)
+//    Under this flag, code is never generated for overflow checking even in
+//    non optimized (debug/dev) builds.
+//    You can enable this flag in the `.cargo/config` file.
 //
-//    What is now the disassembly of the loop (in debug mode):
+//    What is now the disassembly of the loop (in debug/dev mode):
 //
 //    ** your answer here **
 //
-//    commit your answers (bare1_6)
+//    commit your answers (bare1_4)
 //
 //    Now restore the `.cargo/config` to its original state.
 //
-// 7. *Optional
+// 5. *Optional
 //    There is another way to conveniently use wrapping arithmetics
 //    without passing flags to the compiler.
 //
@@ -155,22 +164,22 @@ fn main() -> ! {
 //
 //    ** your answer here **
 //
-//    commit your answers (bare1_7)
+//    commit your answers (bare1_5)
 //
 //    Final discussion:
 //
-//    Embedded code typically is performance sensitve, hence
+//    Embedded code typically is performance sensitive, hence
 //    it is important to understand how code is generated
 //    to achieve efficient implementations.
 //
 //    Moreover, arithmetics are key to processing of data,
 //    so its important that we are in control over the
-//    computations. E.g. comupting checksums, hashes, cryptos etc.
-//    all require precise control over wrapping vs. overflow behaviour.
+//    computations. E.g. computing checksums, hashes, cryptos etc.
+//    all require precise control over wrapping vs. overflow behavior.
 //
 //    If you write a library depending on wrapping arithmetics
 //    do NOT rely on a compiler flag. (The end user might compile
-//    it without this flag enabled, and thus get erronous results.)
+//    it without this flag enabled, and thus get erroneous results.)
 //
 //    NOTICE:
 //    ------
@@ -179,11 +188,11 @@ fn main() -> ! {
 //    restore the `Cargo.toml` (comment out the `features = ["inline-asm"]`)
 //
 //    Pros and cons of nightly:
-//    + Acccess to new Rust features (such as inline assembly)
+//    + Access to new Rust features (such as inline assembly)
 //    - No guarantee these features will work, they might change semantics,
 //      or even be revoked.
 //
-//    The compiler itself is the same, the stable release is just a snapchot
+//    The compiler itself is the same, the stable release is just a snapshot
 //    of the nightly (released each 6 week). It is the latest nightly
 //    that passed some additional regression test, not a different compiler.
 //    And of course, the stable has the experimental features disabled.
