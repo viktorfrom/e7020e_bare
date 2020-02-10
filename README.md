@@ -14,9 +14,16 @@
 ```
 
 - For programming (flashing) and debugging
-  - `openocd` debug host, (install using your package manager). If you are under `Ubuntu` you may need to change the `openocd.cfg` to use the deprecated (older) script (`source [find interface/stlink-v2-1.cfg]`).
+  - `openocd` debug host, (install using your package manager). 
+  
+  If you are under `Ubuntu` or `ÒSX` you may need to change the `openocd.cfg` and `.vscode/launch.json` to use the deprecated (older) script (`source [find interface/stlink-v2-1.cfg]`, and `"configFiles": [
+                "interface/stlink-v2-1.cfg",
+                ...
+            ],` respectively).
 
-  - `arm-none-eabi` tool-chain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity.
+  - `arm-none-eabi` tool-chain (install using your package manager). In the following we refer the `arm-none-eabi-gdb` as just `gdb` for brevity. 
+  
+  If using OSX you can download and install the latest official [GNU ARM](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) toolchain for OSX. You need to unpack the toolchain to your computer and make sure the `bin` directory is in your path. Under OSX the path is defined in `~/.bash_profile`, add `export PATH="<INSTALL>/bin/:$PATH"`, where `<INSTALL>` is the path to the GNU tools (`$HOME/Prog/ARM/gcc-arm-none-eabi-9-2019-q4-major` or similar). (This setting will take effect for all new terminals opened.)
 
   - `stlink` (optional) tools for erasing and programming ST microcontrollers (install using your package manager).
 
@@ -26,9 +33,9 @@
 > cargo install itm
 ```
 
-- `vscode` editor/ide and `cortex-debug` plugin. Install `vscode` using your package manager and follow the instructions at [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) (optional for an integrated debugging experience)
+- `vscode` editor/ide and `cortex-debug` plugin. Install `vscode` using your package manager and follow the instructions at [cortex-debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) (optional for an integrated debugging experience).
 
-- `rust-analyzer` install following instructions at [rust-analyzer](https://github.com/rust-analyzer/rust-analyzer) (optional for Rust support in `vscode`)
+- `rust-analyzer` install following instructions at [rust-analyzer](https://github.com/rust-analyzer/rust-analyzer) (optional for Rust support in `vscode`). You may first need to install `npm` (through you package manager).
 
 ---
 

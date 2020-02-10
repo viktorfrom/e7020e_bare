@@ -17,6 +17,7 @@
             "executable": "./target/thumbv7em-none-eabihf/debug/app",
             "configFiles": [
                 "interface/stlink.cfg",
+                // "interface/stlink-v2-1.cfg", // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
@@ -39,6 +40,7 @@
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
+                // "interface/stlink-v2-1.cfg", // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
@@ -74,6 +76,7 @@
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
+                // "interface/stlink-v2-1.cfg", // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
@@ -98,6 +101,7 @@
             "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
+                // "interface/stlink-v2-1.cfg", // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
@@ -122,6 +126,7 @@
             "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
+                // "interface/stlink-v2-1.cfg", // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
