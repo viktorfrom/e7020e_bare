@@ -557,7 +557,7 @@ $ kill -9 7825
 
 There can be a number of reasons ITM tracing fails.
 
-- The `openocd.gdb` script enables ITM tracing assuming the `/tmp/itm.log` and `itmdump` has been correctly setup before `gdb` is launched (and the script run). So the first thing is to check that you follow the sequence suggested above.
+- The `openocd.gdb` script (or `launch.json` if in vscode using external ITM logging) enables ITM tracing assuming that the `/tmp/itm.fifo` and `itmdump` has been correctly setup before `gdb` is launched. So the first thing is to check that you follow the sequence suggested above.
 
 - `openocd.gdb`sets enables ITM tracing by:
 
@@ -593,7 +593,7 @@ This invokes the `init` event, which sets the core clock to 64MHz. If you intend
 monitor tpiu config internal /tmp/itm.fifo uart off 64000000 2000000
 ```
 
-If you on the other hand want to use `monitor reset init` but not having the core clock set to 64MHz, you can use a custom `.cfg` (instead of the one shipped with `openocd`). The original  `/usr/share/openocd/scripts/target/stm32f0x.cfg` looks like this:
+If you on the other hand want to use `monitor reset init` but not having the core clock set to 64MHz, you can use a custom `.cfg` (instead of the one shipped with `openocd`). The original  `/usr/share/openocd/scripts/target/stm32f4x.cfg` looks like this:
 
 ``` txt
 ...
@@ -805,6 +805,16 @@ Some example launch configurations from the `.vscode/launch.json` file:
 We see some similarities to the `openocd.gdb` file, we don't need to explicitly connect to the target (that is automatic). Also launching `openocd` is automatic (for good and bad, its re-started each time, unless you use the `gdb` prompt to `load`). 
 
 `postLaunchCommands` allows arbitrary commands to be executed by `gdb` once the session is up. E.g. in the `app` case we enable `semihosting`, while in the `itm` case we run `monitor reset init` to get the MCU in 64MHz (first example) or 16MHz (third example), before running the application (continue). Notice the first example uses the "stock" `openocd` configuration files, while the third example uses our local configuration files (that does not change the core frequency).
+
+---
+
+### Rust-Analyzer
+
+In order to properly track symbols from the `core` and/or `std` libraries, you need to add the Rust source. This can be done by:
+
+``` shell
+> rustup component add rust-src
+````
 
 ---
 
