@@ -17,7 +17,7 @@
             "executable": "./target/thumbv7em-none-eabihf/debug/app",
             "configFiles": [
                 "interface/stlink.cfg",
-                // "interface/stlink-v2-1.cfg", // deprecated setup script
+                // "interface/stlink-v2-1.cfg",  // deprecated setup script
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
@@ -36,7 +36,7 @@
             "request": "launch",
             "servertype": "openocd",
             "name": "itm internal (debug)",
-            "preLaunchTask": "cargo build --examples",
+            "preLaunchTask": "cargo build --example",
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
@@ -72,7 +72,7 @@
             "request": "launch",
             "servertype": "openocd",
             "name": "itm fifo (debug)",
-            "preLaunchTask": "cargo build --examples",
+            "preLaunchTask": "cargo build --example",
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
@@ -97,7 +97,7 @@
             "request": "launch",
             "servertype": "openocd",
             "name": "itm fifo (release)",
-            "preLaunchTask": "cargo build --examples --release",
+            "preLaunchTask": "cargo build --example --release",
             "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",
@@ -122,7 +122,7 @@
             "request": "launch",
             "servertype": "openocd",
             "name": "itm fifo 64MHz (release)",
-            "preLaunchTask": "cargo build --examples --release",
+            "preLaunchTask": "cargo build --example --release",
             "executable": "./target/thumbv7em-none-eabihf/release/examples/${fileBasenameNoExtension}",
             "configFiles": [
                 "interface/stlink.cfg",

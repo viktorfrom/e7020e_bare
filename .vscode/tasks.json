@@ -1,4 +1,7 @@
 {
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
     "tasks": [
         {
             "type": "shell",
@@ -26,8 +29,8 @@
         },
         {
             "type": "shell",
-            "label": "cargo build --examples",
-            "command": "cargo build --examples",
+            "label": "cargo build --example",
+            "command": "cargo build --example ${fileBasenameNoExtension}",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -38,8 +41,8 @@
         },
         {
             "type": "shell",
-            "label": "cargo build --examples --release",
-            "command": "cargo build --examples --release",
+            "label": "cargo build --example --release",
+            "command": "cargo build --example ${fileBasenameNoExtension} --release",
             "group": {
                 "kind": "build",
                 "isDefault": true
