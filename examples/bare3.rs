@@ -3,7 +3,7 @@
 //! String types in Rust
 //!
 //! What it covers:
-//! - Types, str, arrays ([u8;uszie]), slices (&[u8])
+//! - Types, str, arrays ([u8; usize]), slices (&[u8])
 //! - Iteration, copy
 //! - Semihosting (tracing)
 
@@ -90,7 +90,8 @@ fn main() -> ! {
 //
 //    Commit your answers (bare3_3)
 //
-// 4. Alter the program so that the data from `bs` is copied byte by byte into `a`.
+// 4. Alter the program so that the data from `bs` is copied byte
+//    by byte into `a` using a loop and raw indexing.
 //
 //    Test that it works as intended.
 //
