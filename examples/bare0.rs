@@ -15,19 +15,15 @@
 // no standard main, we declare main using [entry]
 #![no_main]
 
-// Minimal runtime / startup for Cortex-M microcontrollers
-//extern crate cortex_m_rt as rt;
 // Panic handler, for textual output using semihosting
-extern crate panic_semihosting;
-// Panic handler, infinite loop on panic
-// extern crate panic_halt;
+use panic_semihosting as _;
 
 // import entry point
 use cortex_m_rt::entry;
 
 // a constant (cannot be changed at run-time)
 const X_INIT: u32 = 10;
-//const X_INIT: u32 = core::u32::MAX;
+// const X_INIT: u32 = core::u32::MAX;
 
 // global mutable variables (changed using unsafe code)
 static mut X: u32 = X_INIT;
@@ -50,10 +46,10 @@ fn main() -> ! {
 
 // Here we assume you are using `vscode` with `cortex-debug`.
 //
-// 0. Compile/build the example in debug (dev) mode.
+// 0. Compile/build and run the example in debug (dev) mode.
 //
-//    > cargo build --example bare0
-//    (or use the vscode build task)
+//    > cargo run --example bare0
+//    (or use vscode)
 //
 // 1. Run the program in the debugger, let the program run for a while and
 //    then press pause.

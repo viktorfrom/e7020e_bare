@@ -10,7 +10,7 @@
 #![no_main]
 #![no_std]
 
-extern crate panic_itm;
+use panic_itm as _;
 
 use cortex_m_rt::entry;
 
@@ -49,14 +49,14 @@ fn main() -> ! {
 //
 // 1. Build and run the application
 //
-//    > cargo build --example bare1
-//    (or use the vscode build task)
+//    > cargo run --example bare1
+//    (or use the `itm fifo (debug)` or the `itm internal (debug)` launch configuration.)
 //
-//    Make sure you have followed the instructions for fifo `ITM` tracing.
-//    Debug using the `itm fifo (debug)` launch configuration.
+//    Make sure you have followed the instructions for fifo `ITM` tracing accordingly.
 //
 //    When debugging the application it should hit the `bkpt` instruction.
 //    What happens when you continue (second iteration of the loop)?
+//    (passing 3 breakpoints)
 //
 //    ** your answer here **
 //
@@ -91,7 +91,7 @@ fn main() -> ! {
 //    Rebuild `bare1.rs` in release (optimized mode).
 //
 //    > cargo build --example bare1 --release
-//    (or using the vscode build task)
+//    (or using the vscode)
 //
 //    Compare the generated assembly for the loop
 //    between the dev (un-optimized) and release (optimized) build.
@@ -106,6 +106,11 @@ fn main() -> ! {
 //    ** your answer here **
 //
 //    Where is the local variable stored?
+//
+//    ** your answer here **
+//
+//    Is there now any reference to the panic handler?
+//    If not, why is that the case?
 //
 //    ** your answer here **
 //
@@ -131,7 +136,32 @@ fn main() -> ! {
 //    Later we will demonstrate how we can get guarantees of panic free execution.
 //    This is very important to improve reliability.
 //
-// 4. *Optional
+// 4. Now comment out the `read_volatile`.
+//
+//    > cargo build --example bare1 --release
+//    (or using the vscode)
+//
+//    Compare the generated assembly for the loop
+//    between the dev (un-optimized) and release (optimized) build.
+//
+//    What is the output of:
+//    > disassemble
+//
+//    ** your answer here **
+//
+//    How many instructions are in between the two `bkpt` instructions.
+//
+//    ** your answer here **
+//
+//    Where is the local variable stored?
+//    What happened, and why is Rust + LLVM allowed to do that?
+//
+//    ** your answer here **
+//
+//    commit your answers (bare1_4)
+//
+//
+// 5. *Optional
 //    You can pass additional flags to the Rust `rustc` compiler.
 //
 //    `-Z force-overflow-checks=off`
@@ -144,11 +174,11 @@ fn main() -> ! {
 //
 //    ** your answer here **
 //
-//    commit your answers (bare1_4)
+//    commit your answers (bare1_5)
 //
 //    Now restore the `.cargo/config` to its original state.
 //
-// 5. *Optional
+// 6. *Optional
 //    There is another way to conveniently use wrapping arithmetics
 //    without passing flags to the compiler.
 //
@@ -164,7 +194,7 @@ fn main() -> ! {
 //
 //    ** your answer here **
 //
-//    commit your answers (bare1_5)
+//    commit your answers (bare1_6)
 //
 //    Final discussion:
 //
