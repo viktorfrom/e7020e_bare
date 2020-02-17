@@ -3,7 +3,7 @@
 //! Inspecting the generated assembly
 //!
 //! What it covers
-//! - ITM tracing
+//! - Rust panic tracing using ITM
 //! - assembly calls and inline assembly
 //! - more on arithmetics
 
@@ -45,7 +45,7 @@ fn main() -> ! {
 //
 //    You may need/want to install additional components also.
 //    To that end look at the install section in the README.md.
-//    If you change toolchain, you may need to exit and re-start `vscode`.
+//    (If you change toolchain, you may need to exit and re-start `vscode`.)
 //
 // 1. Build and run the application
 //

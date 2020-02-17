@@ -6,13 +6,14 @@
 //! - Generating documentation
 //! - Using core peripherals
 //! - Measuring time using the DWT
-//! - ITM tracing
+//! - ITM tracing using `iprintln`
+//! - Panic halt
 //!
 
 #![no_main]
 #![no_std]
 
-extern crate panic_halt;
+use panic_halt as _;
 
 use cortex_m::{iprintln, peripheral::DWT, Peripherals};
 use cortex_m_rt::entry;
@@ -37,7 +38,7 @@ fn main() -> ! {
     dwt.enable_cycle_counter();
 
     // Reading the cycle counter can be done without `owning` access
-    // the DWT (since it has no side effetc).
+    // the DWT (since it has no side effect).
     //
     // Look in the docs:
     // pub fn enable_cycle_counter(&mut self)
@@ -89,7 +90,7 @@ fn main() -> ! {
 //
 //    ** your answer here **
 //
-// commit your answers (bare2_1)
+//    commit your answers (bare2_1)
 //
 // 3. *Optional
 //    Inspect the generated binaries, and try stepping through the code

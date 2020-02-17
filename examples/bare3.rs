@@ -5,7 +5,7 @@
 //! What it covers:
 //! - Types, str, arrays ([u8; usize]), slices (&[u8])
 //! - Iteration, copy
-//! - Semihosting (tracing)
+//! - Semihosting (tracing using `hprintln`
 
 #![no_main]
 #![no_std]
@@ -103,3 +103,46 @@ fn main() -> ! {
 //    Implement and test your solution.
 //
 //    Commit your answers (bare3_5)
+//
+// 6. Optional
+//    Rust is heavily influenced by functional languages.
+//    Figure out how you can use an iterator to work over both
+//    the `a` and `bs` to copy the content of `bs` to `a`.
+//
+//    You may use
+//    - `iter` (to turn a slice into an iterator)
+//    - `zip` (to merge two slices into an iterator)
+//    - a for loop to assign the elements
+//
+//    Commit your solution (bare3_6)
+//
+// 7. Optional
+//    Iter using `foreach` and a closure instead of the for loop.
+//
+//    Commit your solution (bare3_7)
+//
+// 8. Optional*
+//    Now benchmark your different solutions using the cycle accurate
+//    DWT based approach (in release mode).
+//
+//    Cycle count for `raw` indexing
+//
+//    ** your answer here **
+//
+//    Cycle count for the primitive slice approach.
+//
+//    ** your answer here **
+//
+//    Cycle count for the primitive slice approach.
+//
+//    ** your answer here **
+//
+//    Cycle count for the zip + for loop approach.
+//
+//    ** your answer here **
+//
+//    Cycle count for the zip + for_each approach.
+//
+//    What conclusions can you draw, does Rust give you zero-cost abstractions?
+//
+//    ** your answer here **
