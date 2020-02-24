@@ -23,6 +23,7 @@ fn main() -> ! {
         x += 1;
         cortex_m::asm::bkpt();
 
+        iprintln!(stim, "test");
         // prevent optimization by read-volatile (unsafe)
         unsafe {
             core::ptr::read_volatile(&x);
@@ -65,6 +66,7 @@ fn main() -> ! {
 //    What is the `ITM` output.
 //
 //    ** your answer here **
+//    answer: panicked at 'attempt to add with overflow', examples/bare1.rs:23:9
 //
 //    Commit your answer (bare1_1)
 //
