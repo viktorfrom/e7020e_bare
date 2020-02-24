@@ -59,6 +59,8 @@ fn main() -> ! {
 //    (passing 3 breakpoints)
 //
 //    ** your answer here **
+//    answer: the program saves the panic message into an itmdump file.
+//            itmdump -f /tmp/itm.fifo
 //
 //    What is the `ITM` output.
 //
