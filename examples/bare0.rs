@@ -29,18 +29,33 @@ const X_INIT: u32 = 10;
 static mut X: u32 = X_INIT;
 static mut Y: u32 = 0;
 
+fn read_x()->u32{
+    unsafe{X}
+}
+fn read_y()->u32{
+    unsafe{Y}
+}
+
+fn write_y(y:u32){
+    unsafe{Y=y};
+}
+
+fn write_x(x:u32){
+    unsafe{X=x};
+}
+
 #[entry]
 fn main() -> ! {
     // local mutable variable (changed in safe code)
-    let mut x = unsafe { X };
+    // let mut x = unsafe { X };
 
+    let mut x =  read_x();
     loop {
-        x += 1; // <- place breakpoint here (3)
-        unsafe {
-            X += 1;
-            Y = X;
-            assert!(x == X && X == Y);
-        }
+        x = x.wrapping_add(1); // <- place breakpoint here (3)
+        
+        write_x(read_x().wrapping_add(1));
+        write_y(read_x());
+        assert!(x == read_x() && read_x() == read_y()+1);
     }
 }
 
@@ -57,17 +72,20 @@ fn main() -> ! {
 //    Look under Variables/Local what do you find.
 //
 //    ** your answer here **
+//    answer: x: 2272486
 //
 //    In the Expressions (WATCH -vscode) view add X and Y
 //    what do you find
 //
 //    ** your answer here **
+//    answer: X: 2272486, Y: <optimized out>
 //
 //    Step through one complete iteration of the loop
 //    and see how the (Local) Variables are updated
 //    can you foresee what will eventually happen?
 //
 // 	  ** place your answer here **
+//    answer: integer overflow
 //
 //    Commit your answers (bare0_1)
 //
@@ -76,6 +94,7 @@ fn main() -> ! {
 //    (Hint, look under OUTPUT/Adopter Output to see the `openocd` output.)
 //
 //    ** your answer here **
+//    answer: The integer overflows.
 //
 //    Commit your answers (bare0_2)
 //
@@ -87,6 +106,7 @@ fn main() -> ! {
 //
 //    Now continue execution, what happens
 //    ** your answer here **
+//    answer: Wrapping (modular) addition, wraps around at the boundary of the type.
 //
 //    Commit your answers (bare0_3)
 //
@@ -96,6 +116,7 @@ fn main() -> ! {
 // 4. Change the assertion to `assert!(x == X && X == Y + 1)`, what happens?
 //
 //    ** place your answer here **
+//    answer: the assertion will fail.
 //
 //    Commit your answers (bare0_4)
 //
