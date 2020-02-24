@@ -170,7 +170,10 @@
                 "target/stm32f4x.cfg"
             ],
             "postLaunchCommands": [
-                "monitor arm semihosting enable"
+                "monitor reset init", // sets the MCU to 64MHz
+                "monitor arm semihosting enable",
+                "monitor tpiu config internal /tmp/itm.fifo uart off 64000000",
+                "monitor itm port 0 on"
             ],
             "runToMain": true,
             "cwd": "${workspaceRoot}"
