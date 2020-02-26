@@ -178,5 +178,26 @@
             "runToMain": true,
             "cwd": "${workspaceRoot}"
         },
+        {
+        "type": "cortex-debug",
+        "request": "launch",
+        "servertype": "openocd",
+        "name": "bare1 (release)",
+        "preLaunchTask": "cargo build --example --release",
+        "executable": "./target/thumbv7em-none-eabihf/debug/examples/bare1",
+        "configFiles": [
+            // "interface/stlink.cfg",
+            "interface/stlink-v2-1.cfg", // deprecated setup script
+            "target/stm32f4x.cfg"
+        ],
+        "postLaunchCommands": [
+            "monitor reset init", // sets the MCU to 64MHz
+            "monitor arm semihosting enable",
+            "monitor tpiu config internal /tmp/itm.fifo uart off 64000000",
+            "monitor itm port 0 on"
+        ],
+        "runToMain": true,
+        "cwd": "${workspaceRoot}"
+        },       
     ],
 }
