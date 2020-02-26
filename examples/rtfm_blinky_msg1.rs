@@ -36,7 +36,7 @@ const APP: () = {
         // power on GPIOA, RM0368 6.3.11
         device.RCC.ahb1enr.modify(|_, w| w.gpioaen().set_bit());
         // configure PA5 as output, RM0368 8.4.1
-        device.GPIOA.moder.modify(|_, w| w.moder5().bits(1));
+        device.GPIOA.moder.modify(|_, w| w.moder5().bits(1)); // "1" can be replaced with "01b"
 
         // pass on late resources
         init::LateResources {
@@ -47,7 +47,7 @@ const APP: () = {
     #[task(resources = [GPIOA], schedule = [toggle])]
     fn toggle(cx: toggle::Context) {
         static mut TOGGLE: bool = false;
-        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
+        hprintln!("toggle  @ {:?}", Instant::now()).unwrap();
 
         if *TOGGLE {
             cx.resources.GPIOA.bsrr.write(|w| w.bs5().set_bit());
