@@ -23,7 +23,6 @@ fn main() -> ! {
         x += 1;
         cortex_m::asm::bkpt();
 
-        iprintln!(stim, "test");
         // prevent optimization by read-volatile (unsafe)
         unsafe {
             core::ptr::read_volatile(&x);
@@ -79,15 +78,23 @@ fn main() -> ! {
 //    > disassemble
 //
 //    ** your answer here **
+//    answer: Dump of assembler code for function main:
+//            0x08000404 <+0>:	push	{r7, lr}
+//            0x08000406 <+2>:	mov	r7, sp
+//         => 0x08000408 <+4>:	bl	0x800040e <bare1::__cortex_m_rt_main>
+//            0x0800040c <+8>:	udf	#254	; 0xfe
+//            End of assembler dump.
 //
 //    How many instructions are in between the two `bkpt` instructions in the loop.
 //    Notice, the generated code may not be exactly what you expect :)
 //
 //    ** your answer here **
+//    answer: 4
 //
 //    Which instruction stores the local variable on the stack.
 //
 //    ** your answer here **
+//    answer: push
 //
 //    Commit your answers (bare1_2)
 //
@@ -104,14 +111,41 @@ fn main() -> ! {
 //    > disassemble
 //
 //    ** your answer here **
+//    answer: Dump of assembler code for function bare1::__cortex_m_rt_main:
+//            0x0800040e <+0>:	push	{r7, lr}
+//            0x08000410 <+2>:	mov	r7, sp
+//            0x08000412 <+4>:	sub	sp, #8
+//            0x08000414 <+6>:	mvn.w	r0, #1
+//            0x08000418 <+10>:	str	r0, [sp, #4]
+//         => 0x0800041a <+12>:	bkpt	0x0000
+//            0x0800041c <+14>:	mov.w	r0, #4294967295	; 0xffffffff
+//            0x08000420 <+18>:	add	r4, sp, #4
+//            0x08000422 <+20>:	str	r0, [sp, #4]
+//            0x08000424 <+22>:	bkpt	0x0000
+//            0x08000426 <+24>:	mov	r0, r4
+//            0x08000428 <+26>:	bl	0x8000400 <core::ptr::read_volatile>
+//            0x0800042c <+30>:	bkpt	0x0000
+//            0x0800042e <+32>:	ldr	r0, [sp, #4]
+//            0x08000430 <+34>:	adds	r0, #1
+//            0x08000432 <+36>:	bcc.n	0x8000422 <bare1::__cortex_m_rt_main+20>
+//            0x08000434 <+38>:	movw	r0, #6352	; 0x18d0
+//            0x08000438 <+42>:	movt	r0, #2048	; 0x800
+//            0x0800043c <+46>:	movw	r2, #6324	; 0x18b4
+//            0x08000440 <+50>:	movt	r2, #2048	; 0x800
+//            0x08000444 <+54>:	movs	r1, #28
+//            0x08000446 <+56>:	bl	0x8000550 <core::panicking::panic>
+//            0x0800044a <+60>:	udf	#254	; 0xfe
+//            End of assembler dump.
 //
 //    How many instructions are in between the two `bkpt` instructions.
 //
 //    ** your answer here **
+//    answer: 23
 //
 //    Where is the local variable stored?
 //
 //    ** your answer here **
+//    answer: 
 //
 //    Is there now any reference to the panic handler?
 //    If not, why is that the case?
