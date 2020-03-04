@@ -78,39 +78,6 @@ fn main() -> ! {
 //    > disassemble
 //
 //    ** your answer here **
-//    answer: Dump of assembler code for function main:
-//            0x08000404 <+0>:	push	{r7, lr}
-//            0x08000406 <+2>:	mov	r7, sp
-//         => 0x08000408 <+4>:	bl	0x800040e <bare1::__cortex_m_rt_main>
-//            0x0800040c <+8>:	udf	#254	; 0xfe
-//            End of assembler dump.
-//
-//    How many instructions are in between the two `bkpt` instructions in the loop.
-//    Notice, the generated code may not be exactly what you expect :)
-//
-//    ** your answer here **
-//    answer: 4
-//
-//    Which instruction stores the local variable on the stack.
-//
-//    ** your answer here **
-//    answer: push
-//
-//    Commit your answers (bare1_2)
-//
-// 3. Release mode (optimized builds).
-//    Rebuild `bare1.rs` in release (optimized mode).
-//
-//    > cargo build --example bare1 --release
-//    (or using the vscode)
-//
-//    Compare the generated assembly for the loop
-//    between the dev (un-optimized) and release (optimized) build.
-//
-//    What is the output of:
-//    > disassemble
-//
-//    ** your answer here **
 //    answer: Dump of assembler code for function bare1::__cortex_m_rt_main:
 //            0x0800040e <+0>:	push	{r7, lr}
 //            0x08000410 <+2>:	mov	r7, sp
@@ -137,7 +104,46 @@ fn main() -> ! {
 //            0x0800044a <+60>:	udf	#254	; 0xfe
 //            End of assembler dump.
 //
+//    How many instructions are in between the two `bkpt` instructions in the loop.
+//    Notice, the generated code may not be exactly what you expect :)
+//
+//    ** your answer here **
+//    answer: 3
+//
+//    Which instruction stores the local variable on the stack.
+//
+//    ** your answer here **
+//    answer: push
+//
+//    Commit your answers (bare1_2)
+//
+// 3. Release mode (optimized builds).
+//    Rebuild `bare1.rs` in release (optimized mode).
+//
+//    > cargo build --example bare1 --release
+//    (or using the vscode)
+//
+//    Compare the generated assembly for the loop
+//    between the dev (un-optimized) and release (optimized) build.
+//
+//    What is the output of:
+//    > disassemble
+//
+//    ** your answer here **
+//    answer: Dump of assembler code for function bare1::__cortex_m_rt_main:
+//            0x08000406 <+0>:	sub	sp, #4
+//            0x08000408 <+2>:	mvn.w	r0, #1
+//            0x0800040c <+6>:	str	r0, [sp, #0]
+//            0x0800040e <+8>:	adds	r0, #1
+//            0x08000410 <+10>:	bkpt	0x0000
+//            0x08000412 <+12>:	str	r0, [sp, #0]
+//            => 0x08000414 <+14>:	bkpt	0x0000
+//            0x08000416 <+16>:	ldr	r0, [sp, #0]
+//            0x08000418 <+18>:	b.n	0x800040e <bare1::__cortex_m_rt_main+8>
+//            End of assembler dump.
+//
 //    How many instructions are in between the two `bkpt` instructions.
+//    answer: 1
 //
 //    ** your answer here **
 //    answer: 23
@@ -145,12 +151,11 @@ fn main() -> ! {
 //    Where is the local variable stored?
 //
 //    ** your answer here **
-//    answer: 
+//    answer: 0x08000412 <+12>:	str	r0, [sp, #0]
 //
 //    Is there now any reference to the panic handler?
 //    If not, why is that the case?
-//
-//    ** your answer here **
+//    answer: no, there is not reference.
 //
 //    commit your answers (bare1_3)
 //
