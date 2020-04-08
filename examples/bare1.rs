@@ -25,7 +25,7 @@ fn main() -> ! {
 
         // prevent optimization by read-volatile (unsafe)
         unsafe {
-            core::ptr::read_volatile(&x);
+            //core::ptr::read_volatile(&x);
         }
     }
 }
@@ -155,7 +155,7 @@ fn main() -> ! {
 //
 //    Is there now any reference to the panic handler?
 //    If not, why is that the case?
-//    answer: no, there is not reference.
+//    answer: No, there is no reference.
 //
 //    commit your answers (bare1_3)
 //
@@ -191,15 +191,23 @@ fn main() -> ! {
 //    > disassemble
 //
 //    ** your answer here **
+//    answer: Dump of assembler code for function bare1::__cortex_m_rt_main:
+//            => 0x0800040a <+0>:	bkpt	0x0000
+//            0x0800040c <+2>:	bkpt	0x0000
+//            0x0800040e <+4>:	b.n	0x800040a <bare1::__cortex_m_rt_main>
+//            End of assembler dump.
 //
 //    How many instructions are in between the two `bkpt` instructions.
 //
 //    ** your answer here **
+//    answer: 0
 //
 //    Where is the local variable stored?
 //    What happened, and why is Rust + LLVM allowed to do that?
 //
 //    ** your answer here **
+//    answer: Release mode applies the highest optimazation grade 
+//            and is therefore allowed to remove certain instructions.
 //
 //    commit your answers (bare1_4)
 //
@@ -212,7 +220,7 @@ fn main() -> ! {
 //    Under this flag, code is never generated for overflow checking even in
 //    non optimized (debug/dev) builds.
 //    You can enable this flag in the `.cargo/config` file.
-//
+//  
 //    What is now the disassembly of the loop (in debug/dev mode):
 //
 //    ** your answer here **
