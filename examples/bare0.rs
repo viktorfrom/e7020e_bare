@@ -55,7 +55,7 @@ fn main() -> ! {
         
         write_x(read_x().wrapping_add(1));
         write_y(read_x());
-        assert!(x == read_x() && read_x() == read_y()+1);
+        assert!(x == read_x() && read_x() == read_y() + 1);
     }
 }
 
@@ -85,7 +85,7 @@ fn main() -> ! {
 //    can you foresee what will eventually happen?
 //
 // 	  ** place your answer here **
-//    answer: integer overflow
+//    answer: Integer overflow
 //
 //    Commit your answers (bare0_1)
 //
@@ -94,7 +94,7 @@ fn main() -> ! {
 //    (Hint, look under OUTPUT/Adopter Output to see the `openocd` output.)
 //
 //    ** your answer here **
-//    answer: The integer overflows.
+//    answer: The integer overflows, panic.
 //
 //    Commit your answers (bare0_2)
 //
@@ -116,7 +116,7 @@ fn main() -> ! {
 // 4. Change the assertion to `assert!(x == X && X == Y + 1)`, what happens?
 //
 //    ** place your answer here **
-//    answer: the assertion will fail.
+//    answer: The assertion will fail, panic.
 //
 //    Commit your answers (bare0_4)
 //
