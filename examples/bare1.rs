@@ -207,7 +207,7 @@ fn main() -> ! {
 //
 //    ** your answer here **
 //    answer: Release mode applies the highest optimazation grade 
-//            and is therefore allowed to remove certain instructions.
+//            and is therefore allowed to "remove" certain instructions.
 //
 //    commit your answers (bare1_4)
 //
