@@ -103,6 +103,7 @@ fn main() -> ! {
 //    Run the program, what happens and why?
 //
 //    ** your answer here **
+//    answer: The list becomes mutable with each value containing 0, this results in "a = ".
 //
 //    Commit your answers (bare3_3)
 //
