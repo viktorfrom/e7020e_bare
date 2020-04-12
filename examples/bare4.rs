@@ -130,15 +130,26 @@ fn main() -> ! {
 //    Why is it important that ordering of volatile operations are ensured by the compiler?
 //
 //    ** your answer here **
+//    answer: if the compiler did not handle ordering of volatile operations unexpected behaviour
+//            might occur, for example trying to call unallocated memory
 //
 //    Give an example in the above code, where reordering might make things go horribly wrong
 //    (hint, accessing a peripheral not being powered...)
 //
 //    ** your answer here **
+//    answer: // power on GPIOA
+//            let r = read_u32(RCC_AHB1ENR); // read
+//            write_u32(RCC_AHB1ENR, r | 1); // set enable
+//
+//            // configure PA5 as output
+//            let r = read_u32(GPIOA_MODER) & !(0b11 << (5 * 2)); // read and mask
+//            write_u32(GPIOA_MODER, r | 0b01 << (5 * 2)); // set output mode
 //
 //    Without the non-reordering property of `write_volatile/read_volatile` could that happen in theory
 //    (argue from the point of data dependencies).
 //
 //    ** your answer here **
+//    answer: in theory one could argue that the compiler would be able to determine where
+//            read/write operations are allocated and adjust.
 //
 //    Commit your answers (bare4_3)
