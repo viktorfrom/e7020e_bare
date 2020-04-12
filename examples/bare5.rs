@@ -142,25 +142,25 @@ fn wait(i: u32) {
 
 // simple test of Your `modify`
 fn test() {
-let t:VolatileCell<u32> = unsafe {  core::mem::uninitialized() };
-t.write(0);
-assert!(t.read() == 0);
-t.modify(3, 3, 0b10101);
-//
-//     10101
-//    ..0111000
-//    ---------
-//    000101000
-assert!(t.read() == 0b101 << 3);
-t.modify(4, 3, 0b10001);
-//    000101000
-//      111
-//      001
-//    000011000
-assert!(t.read() == 0b011 << 3);
+    let t: VolatileCell<u32> = unsafe { core::mem::uninitialized() };
+    t.write(0);
+    assert!(t.read() == 0);
+    t.modify(3, 3, 0b10101);
+    //
+    //     10101
+    //    ..0111000
+    //    ---------
+    //    000101000
+    assert!(t.read() == 0b101 << 3);
+    t.modify(4, 3, 0b10001);
+    //    000101000
+    //      111
+    //      001
+    //    000011000
+    assert!(t.read() == 0b011 << 3);
 
-//if << is used, your code will panic in dev (debug), but not in release mode
-t.modify(32, 3, 1);
+    //if << is used, your code will panic in dev (debug), but not in release mode
+    t.modify(32, 3, 1);
 }
 
 // system startup, can be hidden from the user
@@ -189,15 +189,15 @@ fn idle(rcc: &mut RCC, gpioa: &mut GPIOA) {
     loop {
         // set PA5 high
         // gpioa.BSRRH.write(1 << 5); // set bit, output hight (turn on led)
-                                   // alternatively to set the bit high we can
-                                   // read the value, or with PA5 (bit 5) and write back
+        // alternatively to set the bit high we can
+        // read the value, or with PA5 (bit 5) and write back
         gpioa.ODR.write(gpioa.ODR.read() | (1 << 5));
         wait(10_000);
 
         // set PA5 low
         // gpioa.BSRRL.write(1 << 5); // clear bit, output low (turn off led)
-                                   // alternatively to clear the bit we can
-                                   // read the value, mask out PA5 (bit 5) and write back
+        // alternatively to clear the bit we can
+        // read the value, mask out PA5 (bit 5) and write back
         gpioa.ODR.write(gpioa.ODR.read() & !(1 << 5));
         wait(10_000);
     }

@@ -206,7 +206,7 @@ fn main() -> ! {
 //    What happened, and why is Rust + LLVM allowed to do that?
 //
 //    ** your answer here **
-//    answer: Release mode applies the highest optimazation grade 
+//    answer: Release mode applies the highest optimazation grade
 //            and is therefore allowed to "remove" certain instructions.
 //
 //    commit your answers (bare1_4)
@@ -220,7 +220,7 @@ fn main() -> ! {
 //    Under this flag, code is never generated for overflow checking even in
 //    non optimized (debug/dev) builds.
 //    You can enable this flag in the `.cargo/config` file.
-//  
+//
 //    What is now the disassembly of the loop (in debug/dev mode):
 //
 //    ** your answer here **

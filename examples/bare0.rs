@@ -29,19 +29,19 @@ const X_INIT: u32 = 10;
 static mut X: u32 = X_INIT;
 static mut Y: u32 = 0;
 
-fn read_x()->u32{
-    unsafe{X}
+fn read_x() -> u32 {
+    unsafe { X }
 }
-fn read_y()->u32{
-    unsafe{Y}
-}
-
-fn write_y(y:u32){
-    unsafe{Y=y};
+fn read_y() -> u32 {
+    unsafe { Y }
 }
 
-fn write_x(x:u32){
-    unsafe{X=x};
+fn write_y(y: u32) {
+    unsafe { Y = y };
+}
+
+fn write_x(x: u32) {
+    unsafe { X = x };
 }
 
 #[entry]
@@ -49,10 +49,10 @@ fn main() -> ! {
     // local mutable variable (changed in safe code)
     // let mut x = unsafe { X };
 
-    let mut x =  read_x();
+    let mut x = read_x();
     loop {
         x = x.wrapping_add(1); // <- place breakpoint here (3)
-        
+
         write_x(read_x().wrapping_add(1));
         write_y(read_x());
         assert!(x == read_x() && read_x() == read_y() + 1);
