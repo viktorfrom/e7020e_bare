@@ -9,15 +9,18 @@
 #![no_std]
 #![no_main]
 
-extern crate panic_halt;
+extern crate panic_semihosting;
 
 extern crate cortex_m;
 use cortex_m_rt::entry;
+use cortex_m_semihosting::hprintln;
 
 // C like API...
 mod stm32f40x {
     #[allow(dead_code)]
     use core::{cell, ptr};
+    use cortex_m_semihosting::hprintln;
+
 
     #[rustfmt::skip]
     mod address {
@@ -60,7 +63,11 @@ mod stm32f40x {
     impl VolatileCell<u32> {
         #[inline(always)]
         pub fn modify(&self, offset: u8, width: u8, value: u32) {
+            //hprintln!("offset: {:#b}, width: {:#b}, value: {:#b}", offset, width, value);
+            hprintln!("offset: {:#b}, width: {:#b}, value: {:#b}", offset, width, value);
+
             // your code here
+
         }
     }
 
@@ -151,16 +158,28 @@ fn test() {
     //    ..0111000
     //    ---------
     //    000101000
+
+    // hprintln!("t.read(): {:?}", t.read()).unwrap();
+    // hprintln!("0b101: {:?}", 0b101 << 3);
+    hprintln!("t.read(): {:#b}", t.read()).unwrap();
+    hprintln!("0b101: {:#b}", 0b101 << 3);
+
     assert!(t.read() == 0b101 << 3);
     t.modify(4, 3, 0b10001);
     //    000101000
     //      111
     //      001
     //    000011000
+
+    // hprintln!("t.read(): {:?}", t.read()).unwrap();
+    // hprintln!("0b101: {:?}",  0b10001 << 3);
+    hprintln!("t.read(): {:#b}", t.read()).unwrap();
+    hprintln!("0b101: {:#b}",  0b10001 << 3);
+
     assert!(t.read() == 0b011 << 3);
 
     //if << is used, your code will panic in dev (debug), but not in release mode
-    t.modify(32, 3, 1);
+    //t.modify(32, 3, 1);
 }
 
 // system startup, can be hidden from the user
@@ -184,20 +203,20 @@ fn idle(rcc: &mut RCC, gpioa: &mut GPIOA) {
 
     // configure PA5 as output
     let r = gpioa.MODER.read() & !(0b11 << (5 * 2)); // read and mask
-    gpioa.MODER.write(r | 0b01 << (5 * 2)); // set output mode
-
+    gpioa.MODER.write(r | 0b01 << (5 * 2)); // set output mode 
+    
     loop {
         // set PA5 high
         // gpioa.BSRRH.write(1 << 5); // set bit, output hight (turn on led)
-        // alternatively to set the bit high we can
-        // read the value, or with PA5 (bit 5) and write back
+                                      // alternatively to set the bit high we can
+                                      // read the value, or with PA5 (bit 5) and write back
         gpioa.ODR.write(gpioa.ODR.read() | (1 << 5));
         wait(10_000);
 
         // set PA5 low
-        // gpioa.BSRRL.write(1 << 5); // clear bit, output low (turn off led)
-        // alternatively to clear the bit we can
-        // read the value, mask out PA5 (bit 5) and write back
+        //gpioa.BSRRL.write(1 << 5); // clear bit, output low (turn off led)
+                                     // alternatively to clear the bit we can
+                                     // read the value, mask out PA5 (bit 5) and write back
         gpioa.ODR.write(gpioa.ODR.read() & !(1 << 5));
         wait(10_000);
     }
