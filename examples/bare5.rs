@@ -63,11 +63,16 @@ mod stm32f40x {
     impl VolatileCell<u32> {
         #[inline(always)]
         pub fn modify(&self, offset: u8, width: u8, value: u32) {
-            //hprintln!("offset: {:#b}, width: {:#b}, value: {:#b}", offset, width, value);
-            hprintln!("offset: {:#b}, width: {:#b}, value: {:#b}", offset, width, value);
+            // hprintln!("offset: {:?}, width: {:?}, value: {:?}", offset, width, value);
+            // hprintln!("offset: {:#b}, width: {:#b}, value: {:#b}", offset, width, value);
 
             // your code here
+            let mut mask: u32 = (0b1 << width) - 1;
+            // hprintln!("mask: {:#b}", mask); // create a mask of size width
+            // hprintln!("inverse_mask: {:#b}", !(mask << offset)); // left shift the offset and invert
+            // hprintln!("test: {:#b}", !(mask << offset) & self.read()); // save the values in read()
 
+            self.write(!(mask << offset) & self.read() | (value & mask) << offset);
         }
     }
 
@@ -161,8 +166,8 @@ fn test() {
 
     // hprintln!("t.read(): {:?}", t.read()).unwrap();
     // hprintln!("0b101: {:?}", 0b101 << 3);
-    hprintln!("t.read(): {:#b}", t.read()).unwrap();
-    hprintln!("0b101: {:#b}", 0b101 << 3);
+    // hprintln!("t.read(): {:#b}", t.read()).unwrap();
+    // hprintln!("0b101: {:#b}", 0b101 << 3);
 
     assert!(t.read() == 0b101 << 3);
     t.modify(4, 3, 0b10001);
@@ -173,13 +178,13 @@ fn test() {
 
     // hprintln!("t.read(): {:?}", t.read()).unwrap();
     // hprintln!("0b101: {:?}",  0b10001 << 3);
-    hprintln!("t.read(): {:#b}", t.read()).unwrap();
-    hprintln!("0b101: {:#b}",  0b10001 << 3);
+    // hprintln!("t.read(): {:#b}", t.read()).unwrap();
+    // hprintln!("0b101: {:#b}",  0b10001 << 3);
 
     assert!(t.read() == 0b011 << 3);
 
-    //if << is used, your code will panic in dev (debug), but not in release mode
-    //t.modify(32, 3, 1);
+    // if << is used, your code will panic in dev (debug), but not in release mode
+    // t.modify(32, 3, 1);
 }
 
 // system startup, can be hidden from the user
